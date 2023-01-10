@@ -23,7 +23,7 @@ def run_env(n_steps=1000, render=False, goal=True, obstacles=True):
     # walls = [[x_position, y_position, orientation], ...]
     walls = [
     [0, 12, 0], [4, 12, 0],
-    [0, 4, 0], [4, 4, 0]]        
+    [0, 4, 0], [4, 4, 0]]
     env.add_shapes(
             shape_type="GEOM_BOX", dim=dim, mass=0, poses_2d=walls
         )
