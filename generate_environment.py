@@ -43,20 +43,28 @@ def run_env(obstacles_coordinates, obstacles_dimensions,
     return history
 
 environments = {0: [[[-5, -5, 0], [5, 5, 0]] ,
-                    [[20, 1, 1], [20, 1, 1]]]
+                    [[20, 1, 1], [20, 1, 1]]],
+        1: [[[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
+            [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]]]
         }
 
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
-    environment_id = 0
+    environment_id = 1
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
-    boundary_dimensions = [[30, 1, 1], [1, 30, 1], 
-                            [1, 30, 1], [30, 1, 1] ]
+    boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
+                            [0.5, 30, 1], [30, 0.5, 1] ]
 
     boundary_coordinates += environments[environment_id][0]
     boundary_dimensions += environments[environment_id][1]
 
-    path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id)
+    startpos = (-13., -13.)
+    endpos = (13., 13.)
+    n_iter = 4000
+    
+
+    path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
+                            startpos, endpos, n_iter)
     run_env(boundary_coordinates, boundary_dimensions, render=True)

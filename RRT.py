@@ -214,6 +214,8 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
     G = Graph(startpos, endpos)
 
     for i in range(n_iter):
+        if G.success == True:
+            break
         # if (i/n_iter)%2 == 0:
         print("at", i)
         randvex = G.randomPosition()
@@ -358,11 +360,10 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
 
 
 
-def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id):
+def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
+                    startpos, endpos, n_iter):
     path = None
-    startpos = (-10., -10.)
-    endpos = (10., 10.)
-    
+
     obstacles_coordinates = np.array(obstacles_coordinates)
     obstacles_dimensions = np.array(obstacles_dimensions)
     assert obstacles_coordinates.size == obstacles_dimensions.size
@@ -371,18 +372,17 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id)
     for i in range(len(obstacles_coordinates)):
         obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
 
-    n_iter = 2000
+    n_iter = 4000
     stepSize = 0.7
 
     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
 
-
+    t0 = time.time()
     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
+    t1 = time.time()
+    print("Time spent creating graph: {}".format(t1-t0))
     if G.success:
-        t0 = time.time()
         path = dijkstra(G)
-        t1 = time.time()
-        print("Time spent computing shortest path {}".format(t1-t0))
         plot(G, obstacles, environment_id, path)
     else:
         plot(G, obstacles, environment_id)
