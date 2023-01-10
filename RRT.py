@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import collections  as mc
 from collections import deque
+import time
 
+SAFETY_MARGIN = True
 
 class Line():
     ''' Define line '''
@@ -33,18 +35,32 @@ class Obstacle():
         self.width = width
         self.height = height
     
-    def corners(self):
-        x1 = self.x - self.width/2
-        y1 = self.y - self.height/2
+    def corners(self, margin=1):
+        if SAFETY_MARGIN:
+            x1 = self.x - self.width/2 - margin/2
+            y1 = self.y - self.height/2 - margin/2
 
-        x2 = self.x + self.width/2
-        y2 = self.y - self.height/2
+            x2 = self.x + self.width/2 + margin/2
+            y2 = self.y - self.height/2 - margin/2
 
-        x3 = self.x + self.width/2
-        y3 = self.y + self.height/2
+            x3 = self.x + self.width/2 + margin/2
+            y3 = self.y + self.height/2 + margin/2
 
-        x4 = self.x - self.width/2
-        y4 = self.y + self.height/2
+            x4 = self.x - self.width/2 - margin/2
+            y4 = self.y + self.height/2 + margin/2
+        else:
+            x1 = self.x - self.width/2
+            y1 = self.y - self.height/2
+
+            x2 = self.x + self.width/2
+            y2 = self.y - self.height/2
+
+            x3 = self.x + self.width/2
+            y3 = self.y + self.height/2
+
+            x4 = self.x - self.width/2
+            y4 = self.y + self.height/2
+
         return np.array([(x1, y1), (x2, y2), (x3, y3), (x4, y4)])
 
 def IntersectLine(line1, line2):
@@ -85,13 +101,18 @@ def distance(x, y):
     return np.linalg.norm(np.array(x) - np.array(y))
 
 
-def isInObstacle(vex, obstacles):
+def isInObstacle(vex, obstacles, margin=1):
     for obs in obstacles:
         nodeX = vex[0]
         nodeY = vex[1]
-        if (obs.x - obs.width/2 <= nodeX and nodeX <= obs.x + obs.width/2 and
-        obs.y - obs.height/2 <= nodeY and nodeY <= obs.y + obs.height/2):
-            return True
+        if SAFETY_MARGIN:
+            if (obs.x - obs.width/2 - margin/2 <= nodeX and nodeX <= obs.x + obs.width/2 + margin/2 and
+            obs.y - obs.height/2 - margin/2 <= nodeY and nodeY <= obs.y + obs.height/2 + margin/2):
+                return True
+        else:
+            if (obs.x - obs.width/2 <= nodeX and nodeX <= obs.x + obs.width/2 and
+            obs.y - obs.height/2 <= nodeY and nodeY <= obs.y + obs.height/2):
+                return True
     return False
 
 
@@ -356,8 +377,10 @@ if __name__ == '__main__':
     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
     # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
     if G.success:
+        t0 = time.time()
         path = dijkstra(G)
-
+        t1 = time.time()
+        print("Time spent computing shortest path {}".format(t1-t0))
         plot(G, obstacles, path)
     else:
         plot(G, obstacles)
