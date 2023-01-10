@@ -208,39 +208,14 @@ class Graph:
         posy = self.startpos[1] - (self.sy / 2.) + ry * self.sy * 2
         return posx, posy
 
-def RRT(startpos, endpos, obstacles, n_iter, stepSize):
-    ''' RRT algorithm '''
-    G = Graph(startpos, endpos)
-
-    for _ in range(n_iter):
-        randvex = G.randomPosition()
-        if isInObstacle(randvex, obstacles, radius):
-            continue
-
-        nearvex, nearidx = nearest(G, randvex, obstacles, radius)
-        if nearvex is None:
-            continue
-
-        newvex = newVertex(randvex, nearvex, stepSize)
-
-        newidx = G.add_vex(newvex)
-        dist = distance(newvex, nearvex)
-        G.add_edge(newidx, nearidx, dist)
-
-        dist = distance(newvex, G.endpos)
-        if dist < 2 * radius:
-            endidx = G.add_vex(G.endpos)
-            G.add_edge(newidx, endidx, dist)
-            G.success = True
-            #print('success')
-            # break
-    return G
 
 def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
     ''' RRT star algorithm '''
     G = Graph(startpos, endpos)
 
-    for _ in range(n_iter):
+    for i in range(n_iter):
+        # if (i/n_iter)%2 == 0:
+        print("at", i)
         randvex = G.randomPosition()
         if isInObstacle(randvex, obstacles):
             continue
@@ -322,7 +297,7 @@ def dijkstra(G):
     print(path)
     return list(path)
 
-def plot(G, obstacles, path=None):
+def plot(G, obstacles, environment_id, path=None):
     '''
     Plot RRT, obstacles and shortest path
     '''
@@ -349,7 +324,7 @@ def plot(G, obstacles, path=None):
 
     ax.autoscale()
     ax.margins(0.1)
-    plt.show()
+    plt.savefig('graph{}.png'.format(environment_id))
 
 
 def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
@@ -359,29 +334,43 @@ def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
         plot(G, obstacles, path)
         return path
 
-# def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
-#     '''
-#     obstacle_coordinates = x, y, orientation
-#     obstacle_dimensions = width, length, height
-#         length >>>>>> width: this is independant of the orientation
-#     '''
-#     x = obstacle_coordinates[0]
-#     y = obstacle_coordinates[1]
-#     possible_orientations = 
-#     if obstacle_coordinates[2]
-#     width = 
-#     height =
+def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
+    '''
+    obstacle_coordinates = x, y, orientation
+    obstacle_dimensions = width, length, height
+        length >>>>>> width: this is independant of the orientation
+    '''
+    x = obstacle_coordinates[0]
+    y = obstacle_coordinates[1]
+    width = obstacle_dimensions[0]
+    height = obstacle_dimensions[1]
+    return Obstacle(x, y, width, height)
+    # possible_orientations = [0, 0.5*np.pi, np.pi, 1.5*np.pi]
+    # if obstacle_coordinates[2] in possible_orientations:
+    #     if obstacle_coordinates[2] == 0 or obstacle_coordinates[2] == np.pi:
+    
+        # else:
+        #     width = obstacle_dimensions[1]
+        #     height = obstacle_dimensions[0]
+    
+    # else:
+    #     print("Not supported obstacle orientation")
 
 
 
-
-def pathComputation():
+def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id):
     path = None
     startpos = (-10., -10.)
     endpos = (10., 10.)
-    boundaryObstacles = [Obstacle(0, -15, 1, 30), Obstacle(-15, 0, 30, 1), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
-    obstacles = [Obstacle(15, 15, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(17, 9, 1, 7)] 
-    obstacles += boundaryObstacles
+    
+    obstacles_coordinates = np.array(obstacles_coordinates)
+    obstacles_dimensions = np.array(obstacles_dimensions)
+    assert obstacles_coordinates.size == obstacles_dimensions.size
+
+    obstacles = []
+    for i in range(len(obstacles_coordinates)):
+        obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
+
     n_iter = 2000
     stepSize = 0.7
 
@@ -389,38 +378,39 @@ def pathComputation():
 
 
     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
-    # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
     if G.success:
         t0 = time.time()
         path = dijkstra(G)
         t1 = time.time()
         print("Time spent computing shortest path {}".format(t1-t0))
-        plot(G, obstacles, path)
+        plot(G, obstacles, environment_id, path)
     else:
-        plot(G, obstacles)
+        plot(G, obstacles, environment_id)
     return path
 
 
-if __name__ == '__main__':
-    path = None
-    startpos = (-13., -13.)
-    endpos = (10., 10.)
-    boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
-    obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
-    obstacles += boundaryObstacles
-    n_iter = 2000
-    stepSize = 0.7
-
-    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
 
 
-    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
-    # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
-    if G.success:
-        t0 = time.time()
-        path = dijkstra(G)
-        t1 = time.time()
-        print("Time spent computing shortest path {}".format(t1-t0))
-        plot(G, obstacles, path)
-    else:
-        plot(G, obstacles)
+# if __name__ == '__main__':
+#     path = None
+#     startpos = (-13., -13.)
+#     endpos = (10., 10.)
+#     boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
+#     obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
+#     obstacles += boundaryObstacles
+#     n_iter = 2000
+#     stepSize = 0.7
+
+#     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+
+
+#     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
+#     # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
+#     if G.success:
+#         t0 = time.time()
+#         path = dijkstra(G)
+#         t1 = time.time()
+#         print("Time spent computing shortest path {}".format(t1-t0))
+#         plot(G, obstacles, path)
+#     else:
+#         plot(G, obstacles)
