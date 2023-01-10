@@ -359,14 +359,54 @@ def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
         plot(G, obstacles, path)
         return path
 
+# def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
+#     '''
+#     obstacle_coordinates = x, y, orientation
+#     obstacle_dimensions = width, length, height
+#         length >>>>>> width: this is independant of the orientation
+#     '''
+#     x = obstacle_coordinates[0]
+#     y = obstacle_coordinates[1]
+#     possible_orientations = 
+#     if obstacle_coordinates[2]
+#     width = 
+#     height =
+
+
+
+
+def pathComputation():
+    path = None
+    startpos = (-10., -10.)
+    endpos = (10., 10.)
+    boundaryObstacles = [Obstacle(0, -15, 1, 30), Obstacle(-15, 0, 30, 1), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
+    obstacles = [Obstacle(15, 15, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(17, 9, 1, 7)] 
+    obstacles += boundaryObstacles
+    n_iter = 2000
+    stepSize = 0.7
+
+    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+
+
+    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
+    # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
+    if G.success:
+        t0 = time.time()
+        path = dijkstra(G)
+        t1 = time.time()
+        print("Time spent computing shortest path {}".format(t1-t0))
+        plot(G, obstacles, path)
+    else:
+        plot(G, obstacles)
+    return path
 
 
 if __name__ == '__main__':
     path = None
-    startpos = (2., 2.)
-    endpos = (28., 28.)
-    boundaryObstacles = [Obstacle(0, 15, 1, 30), Obstacle(15, 0, 30, 1), Obstacle(30, 15, 1, 30), Obstacle(15,30, 30,1)]
-    obstacles = [Obstacle(15, 15, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(17, 9, 1, 7)] 
+    startpos = (-13., -13.)
+    endpos = (10., 10.)
+    boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
+    obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
     obstacles += boundaryObstacles
     n_iter = 2000
     stepSize = 0.7
