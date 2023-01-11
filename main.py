@@ -14,7 +14,7 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(n_steps=200, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, n_steps=400, render=False, goal=True, obstacles=True):
     robots = [
         Prius(mode="vel"),
     ]
@@ -29,21 +29,24 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
     N = 4
     M = 2
 
-    init_state = np.array([0, -0.25, np.radians(-0), 0])
-    action = np.array([1, 2])
     speed = 0
     ang_vel = 0
 
     x_sim = np.zeros((N, n_steps))
     u_sim = np.zeros((M, n_steps - 1))
 
-    ob = env.reset(pos = init_state)
-    print(f"Initial observation : {ob}")
+    path_points = np.load("assignment_pdm/path.npy")
 
-    print("Starting episode")
-    history = []
+    x_points = []
+    y_points = []
 
-    path = np.load("assignment_pdm/track.npy")
+    for points in path_points:
+        x_points.append(points[0])
+        y_points.append(points[1])
+
+    path = mpc.compute_path_from_wp(
+    x_points, y_points, 0.1
+    )
 
     for x_, y_ in zip(path[0, :], path[1, :]):
         p.addUserDebugLine([x_, y_, 0], [x_, y_, 0.33], [0, 0, 1])
@@ -53,11 +56,17 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
 
     # Starting Condition
     x0 = np.zeros(N)
-    x0[0] = 0  # x
-    x0[1] = -0.25  # y
+    x0[0] = x_points[0]  # x
+    x0[1] = y_points[0]  # y
     x0[2] = 0.0  # v
     x0[3] = np.radians(-0)  # yaw
     x_sim[:, 0] = x0  # simulation_starting conditions
+
+    ob = env.reset(pos = np.array(x0[:3]))
+    print(f"Initial observation : {ob}")
+
+    print("Starting episode")
+    history = []
 
     # starting guess
     action = np.zeros(M)
@@ -75,6 +84,16 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
     REF_VEL = 1.0
 
     prev_steer = 0.0
+
+    """"Dimensions for the walls"""
+    # dim = [width, length, height]
+    dim = np.array([0.2, 8, 0.5])
+
+    """"Coordinates for the walls"""
+    for i in range(len(obstacles_coordinates)):
+            env.add_shapes(
+                shape_type="GEOM_BOX", dim=obstacles_dimensions[i], mass=0, poses_2d=[obstacles_coordinates[i]]
+            )
 
     for sim_step in range(n_steps):
 
@@ -109,7 +128,6 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
         prev_steer = steering_angle
 
         # print([speed, ang_vel])
-        print([speed, ang_vel])
 
         ob, _, _, _ = env.step([speed, steering_angle_delta])
         pos = robots[0].state["joint_state"]["position"]
@@ -128,7 +146,7 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
 
     plt.subplot(grid[0:4, 0:4])
     plt.plot(path[0, :], path[1, :], "b+")
-    plt.plot(x_sim[0, :], x_sim[1, :])
+    plt.plot(x_sim[0, :], x_sim[1, :], color = "red")
     plt.axis("equal")
     plt.ylabel("y")
     plt.xlabel("x")
@@ -153,6 +171,33 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
     plt.show()
     return history
 
+environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
+                    "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13)},
+                1: {"obstacle_coordinates": [[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
+                    "obstacle_dimensions": [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13)},
+                2: {"obstacle_coordinates":[[-11.25, 11.25, 0], [-3.75, 11.25, 0], [3.75, 11.25, 0], [11.25, 11.25, 0],
+                                            [-11.25, 3.75, 0], [-3.75, 3.75, 0], [3.75, 3.75, 0], [11.25, 3.75, 0],
+                                            [-11.25, -3.75, 0], [-3.75, -3.75, 0], [3.75, -3.75, 0], [11.25, -3.75, 0],
+                                            [-11.25, -11.25, 0], [-3.75, -11.25, 0], [3.75, -11.25, 0], [11.25, -11.25, 0]],
+                    "obstacle_dimensions": [[1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1]],
+                    "startpos": (-11.25, -13.5),
+                    "endpos": (11.25, 13.5)}  
+        }
 
 if __name__ == "__main__":
-    run_env(render=True)
+    environment_id = 0
+    boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
+                    [15, 0, 0], [0, 15, 0]]    
+    boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
+                            [0.5, 30, 1], [30, 0.5, 1] ]
+
+    boundary_coordinates += environments[environment_id]["obstacle_coordinates"]
+    boundary_dimensions += environments[environment_id]["obstacle_dimensions"]
+    run_env(boundary_coordinates, boundary_dimensions, render=True)

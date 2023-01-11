@@ -71,9 +71,13 @@ if __name__ == "__main__":
 
     startpos = environments[environment_id]["startpos"]
     endpos = environments[environment_id]["endpos"]
-    n_iter = 4000
+    n_iter = 3000
     
 
     path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
                             startpos, endpos, n_iter, make_animation= MAKE_ANIMATION)
+
+    np.save("assignment_pdm/path.npy", np.array(path))
+    print(path)
+
     run_env(boundary_coordinates, boundary_dimensions, render=True)

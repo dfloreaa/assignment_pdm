@@ -1,6 +1,7 @@
 import numpy as np
 import cvxpy as opt
 from scipy.integrate import odeint
+from scipy.interpolate import interp1d
 
 MAX_SPEED = 1.5  # m/s
 MAX_ACC = 1.0  # m/ss
@@ -226,3 +227,35 @@ def get_linear_model_matrices(x_bar, u_bar, mpc, L):
 
     # return np.round(A_lin,6), np.round(B_lin,6), np.round(C_lin,6)
     return A_lin, B_lin, C_lin
+
+def compute_path_from_wp(start_xp, start_yp, step=0.1):
+    """
+    Computes a reference path given a set of waypoints
+    """
+
+    final_xp = []
+    final_yp = []
+    delta = step  # [m]
+
+    for idx in range(len(start_xp) - 1):
+        section_len = np.sum(
+            np.sqrt(
+                np.power(np.diff(start_xp[idx : idx + 2]), 2)
+                + np.power(np.diff(start_yp[idx : idx + 2]), 2)
+            )
+        )
+
+        interp_range = np.linspace(0, 1, np.floor(section_len / delta).astype(int))
+
+        fx = interp1d(np.linspace(0, 1, 2), start_xp[idx : idx + 2], kind=1)
+        fy = interp1d(np.linspace(0, 1, 2), start_yp[idx : idx + 2], kind=1)
+
+        # watch out to duplicate points!
+        final_xp = np.append(final_xp, fx(interp_range)[1:])
+        final_yp = np.append(final_yp, fy(interp_range)[1:])
+
+    dx = np.append(0, np.diff(final_xp))
+    dy = np.append(0, np.diff(final_yp))
+    theta = np.arctan2(dy, dx)
+
+    return np.vstack((final_xp, final_yp, theta))
