@@ -7,25 +7,16 @@ from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
 
-DELTA_TIME = 0.1
+DELTA_TIME = 0.2
 MAX_SPEED = 1.5  # m/s
 MAX_ACC = 1.0  # m/ss
 MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
+L = 0.494
+
 def run_env(n_steps=200, render=False, goal=True, obstacles=True):
-    robots = [
-        Prius(mode="vel"),
-    ]
-
-    L = robots[0]._wheel_distance
-
-    env = gym.make(
-        "urdf-env-v0",
-        dt = DELTA_TIME, robots=robots, render=render
-    )
-
     N = 4
     M = 2
 
@@ -37,16 +28,13 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
     x_sim = np.zeros((N, n_steps))
     u_sim = np.zeros((M, n_steps - 1))
 
-    ob = env.reset(pos = init_state)
-    print(f"Initial observation : {ob}")
-
     print("Starting episode")
     history = []
 
     path = np.load("assignment_pdm/track.npy")
 
-    for x_, y_ in zip(path[0, :], path[1, :]):
-        p.addUserDebugLine([x_, y_, 0], [x_, y_, 0.33], [0, 0, 1])
+    # for x_, y_ in zip(path[0, :], path[1, :]):
+        # p.addUserDebugLine([x_, y_, 0], [x_, y_, 0.33], [0, 0, 1])
 
     x_sim = np.zeros((N, n_steps + 1))
     u_sim = np.zeros((M, n_steps))
@@ -66,15 +54,13 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
     u_sim[:, 0] = action
 
     # Cost Matrices
-    Q = np.diag([20, 50, 10, 20])  # state error cost
+    Q = np.diag([20, 20, 10, 20])  # state error cost
     Qf = np.diag([30, 30, 30, 30])  # state final error cost
     R = np.diag([10, 10])  # input cost
     R_ = np.diag([10, 10])  # input rate of change cost
 
     controller = mpc.MPC(N, M, Q, R, horizon = 10, dt = DELTA_TIME)
     REF_VEL = 1.0
-
-    prev_steer = 0.0
 
     for sim_step in range(n_steps):
 
@@ -103,23 +89,13 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
         u_sim[:, sim_step] = u_bar[:, 0]
 
         speed += u_bar[:, 0][0] * DELTA_TIME
-        steering_angle = u_bar[:, 0][1]
+        ang_vel = u_bar[:, 0][1]
 
-        steering_angle_delta = (steering_angle - prev_steer)/DELTA_TIME
-        prev_steer = steering_angle
+        tspan = [0, DELTA_TIME]
+        x_sim[:, sim_step + 1] = controller.predict(x_sim[:, sim_step], u_bar, L)[:, 1]
 
         # print([speed, ang_vel])
-        print([speed, ang_vel])
-
-        ob, _, _, _ = env.step([speed, steering_angle_delta])
-        pos = robots[0].state["joint_state"]["position"]
-
-        x_sim[0, sim_step + 1] = pos[0]
-        x_sim[1, sim_step + 1] = pos[1]
-        x_sim[2, sim_step + 1] = speed
-        x_sim[3, sim_step + 1] = pos[2]
-        history.append(ob)
-    env.close()
+        # print([speed, ang_vel])
 
     # plot trajectory
     grid = plt.GridSpec(4, 5)
@@ -151,6 +127,9 @@ def run_env(n_steps=200, render=False, goal=True, obstacles=True):
 
     plt.tight_layout()
     plt.show()
+
+    while True:
+        continue
     return history
 
 

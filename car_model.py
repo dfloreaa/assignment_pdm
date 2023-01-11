@@ -9,11 +9,11 @@ class CarModel():
         self.L = wheel_dist     # m
         self.horizon = horizon
 
-        self.MAX_ACC = 1.0                  # m/s^2
-        self.MAX_STEER = np.radians(30)     # rad
+        self.MAX_ACC = 5                  # m/s^2
+        self.MAX_STEER = np.radians(40)     # rad
 
-        self.MAX_ACC_DT = 1.0               # m/s^3
-        self.MAX_STEER_DT = np.radians(30)  # rad/s
+        self.MAX_ACC_DT = 1               # m/s^3
+        self.MAX_STEER_DT = np.radians(10)  # rad/s
 
     def kinematic_model(self, state, t, u):
         """

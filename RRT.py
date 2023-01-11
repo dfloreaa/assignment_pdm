@@ -391,26 +391,28 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id)
 
 
 
-# if __name__ == '__main__':
-#     path = None
-#     startpos = (-13., -13.)
-#     endpos = (10., 10.)
-#     boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
-#     obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
-#     obstacles += boundaryObstacles
-#     n_iter = 2000
-#     stepSize = 0.7
+if __name__ == '__main__':
+    path = None
+    startpos = (-13., -13.)
+    endpos = (10., 10.)
+    boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
+    obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
+    obstacles += boundaryObstacles
+    n_iter = 2000
+    stepSize = 0.7
 
-#     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
 
 
-#     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
+    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
 #     # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
-#     if G.success:
-#         t0 = time.time()
-#         path = dijkstra(G)
-#         t1 = time.time()
-#         print("Time spent computing shortest path {}".format(t1-t0))
-#         plot(G, obstacles, path)
-#     else:
-#         plot(G, obstacles)
+    if G.success:
+        t0 = time.time()
+        path = dijkstra(G)
+        t1 = time.time()
+        print("Time spent computing shortest path {}".format(t1-t0))
+        # plot(G, obstacles, path)
+    # else:
+        # plot(G, obstacles)
+
+        print(path)

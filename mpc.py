@@ -5,7 +5,7 @@ import car_model as cm
 
 class MPC():
     def __init__(self, car_model, N, M, Q, R, horizon = 10 ,dt = 0.2):
-        self.car = cm.CarModel()
+        self.car = car_model
         self.state_len = N
         self.action_len = M
 
@@ -28,6 +28,8 @@ class MPC():
         R = self.action_cost
 
         # Create variables
+        # print(target.shape)
+        # print(self.state_len, self.horizon + 1)
         x = opt.Variable((self.state_len, self.horizon + 1), name = "states")
         u = opt.Variable((self.action_len, self.horizon), name = "actions")
 
@@ -39,7 +41,7 @@ class MPC():
             _cost = opt.quad_form(target[:, t + 1] - x[:, t + 1], Q) + opt.quad_form(u[:, t], R)
 
             _constraints = [
-                x[:, t + 1] == A @ x[:, t] + B @ u[:, t] + C,
+                x[:, t + 1] == A @ x[:, t] + B @ u[:, t] + C.flatten(),
                 u[0, t] >= -max_acc,
                 u[0, t] <= max_acc,
                 u[1, t] >= -max_steer,
@@ -66,11 +68,11 @@ class MPC():
         problem.solve(solver=opt.OSQP)
         return x, u
 
-    def get_closest_waypoint(self, path):
+    def get_closest_waypoint(self, state, path):
         # Computes the index of the waypoint closest to vehicle
 
-        dx = self.state[0] - path[0, :]
-        dy = self.state[1] - path[1, :]
+        dx = state[0] - path[0, :]
+        dy = state[1] - path[1, :]
         dist = np.hypot(dx, dy)
         cw_idx = np.argmin(dist)
 
@@ -78,7 +80,7 @@ class MPC():
             v = [path[0, cw_idx + 1] - path[0, cw_idx], path[1, cw_idx + 1] - path[1, cw_idx]]
             v /= np.linalg.norm(v)
 
-            d = [path[0, cw_idx] - self.state[0], path[1, cw_idx] - self.state[1]]
+            d = [path[0, cw_idx] - state[0], path[1, cw_idx] - state[1]]
 
             if np.dot(d, v) > 0:
                 target_idx = cw_idx
@@ -90,7 +92,7 @@ class MPC():
 
         return target_idx
 
-    def simplify_angle(angle):
+    def simplify_angle(self, angle):
         # Simllify an angle to [-pi, pi]
         
         while angle > np.pi:
@@ -100,3 +102,53 @@ class MPC():
             angle += 2.0 * np.pi
 
         return angle
+
+    def get_ref_trajectory(self, state, path, target_v):
+        """
+        For each step in the time horizon
+        modified reference in robot frame
+        """
+        xref = np.zeros((self.state_len, self.horizon + 1))
+        dref = np.zeros((1, self.horizon + 1))
+
+        # sp = np.ones((1,T +1))*target_v #speed profile
+
+        ncourse = path.shape[1]
+
+        ind = self.get_closest_waypoint(state, path)
+        dx = path[0, ind] - state[0]
+        dy = path[1, ind] - state[1]
+
+        xref[0, 0] = dx * np.cos(-state[2]) - dy * np.sin(-state[2])  # X
+        xref[1, 0] = dy * np.cos(-state[2]) + dx * np.sin(-state[2])  # Y
+        xref[2, 0] = target_v  # V
+        xref[3, 0] = self.simplify_angle(path[2, ind] - state[2])  # Theta
+        dref[0, 0] = 0.0  # steer operational point should be 0
+
+        dl = 0.05  # Waypoints spacing [m]
+        travel = 0.0
+
+        for i in range(1, self.horizon + 1):
+            travel += abs(target_v) * self.dt  # current V or target V?
+            dind = int(round(travel / dl))
+
+            if (ind + dind) < ncourse:
+                dx = path[0, ind + dind] - state[0]
+                dy = path[1, ind + dind] - state[1]
+
+                xref[0, i] = dx * np.cos(-state[2]) - dy * np.sin(-state[2])
+                xref[1, i] = dy * np.cos(-state[2]) + dx * np.sin(-state[2])
+                xref[2, i] = target_v  # sp[ind + dind]
+                xref[3, i] = self.simplify_angle(path[2, ind + dind] - state[2])
+                dref[0, i] = 0.0
+            else:
+                dx = path[0, ncourse - 1] - state[0]
+                dy = path[1, ncourse - 1] - state[1]
+
+                xref[0, i] = dx * np.cos(-state[2]) - dy * np.sin(-state[2])
+                xref[1, i] = dy * np.cos(-state[2]) + dx * np.sin(-state[2])
+                xref[2, i] = 0.0  # stop? #sp[ncourse - 1]
+                xref[3, i] = self.simplify_angle(path[2, ncourse - 1] - state[2])
+                dref[0, i] = 0.0
+
+        return xref, dref
