@@ -52,14 +52,14 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                                             [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
                                             [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
                                             [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1]],
-                    "startpos": (-7.5, -11.25),
-                    "endpos": (7.5, 11.25)}  
+                    "startpos": (-11.25, -13.5),
+                    "endpos": (11.25, 13.5)}  
         }
 
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
-    environment_id = 2
+    environment_id = 0
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     startpos = environments[environment_id]["startpos"]
     endpos = environments[environment_id]["endpos"]
-    n_iter = 2000
+    n_iter = 500
     
 
     path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
