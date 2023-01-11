@@ -59,6 +59,7 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
+    MAKE_ANIMATION = False
     environment_id = 0
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
@@ -70,9 +71,9 @@ if __name__ == "__main__":
 
     startpos = environments[environment_id]["startpos"]
     endpos = environments[environment_id]["endpos"]
-    n_iter = 500
+    n_iter = 4000
     
 
     path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
-                            startpos, endpos, n_iter)
+                            startpos, endpos, n_iter, make_animation= MAKE_ANIMATION)
     run_env(boundary_coordinates, boundary_dimensions, render=True)

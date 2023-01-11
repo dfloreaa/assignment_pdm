@@ -11,9 +11,10 @@ import matplotlib.patches as patches
 from matplotlib import collections  as mc
 from collections import deque
 import matplotlib.animation as animation
+import matplotlib
 import time
-import imageio as iio
-from pathlib import Path
+import os
+import glob
 
 SAFETY_MARGIN = True
 
@@ -212,7 +213,7 @@ class Graph:
         return posx, posy
 
 
-def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
+def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_animation=False):
     ''' RRT star algorithm '''
     fig = plt.figure()
     G = Graph(startpos, endpos)
@@ -225,8 +226,8 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
             
         if i%50 == 0:
             print("at", i)
-            n_ims += 1
-            intermediatePlot(G, obstacles, i/50)
+            if make_animation:
+                intermediatePlot(G, obstacles, i/50)
         randvex = G.randomPosition()
         if isInObstacle(randvex, obstacles):
             continue
@@ -270,7 +271,6 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
             if G.success == False:
                 n_succes = i
             G.success = True
-    makeAnimation(n_ims)
     return G
 
 def dijkstra(G):
@@ -340,7 +340,7 @@ def plot(G, obstacles, environment_id, path=None):
 def intermediatePlot(G, obstacles, i):
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
-    fig, ax = plt.subplots(figsize=(8,8))
+    fig, ax = plt.subplots(figsize=(6,6))
 
     for obstacle in obstacles:
         rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='red')
@@ -390,37 +390,10 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
 
 
 
-def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
-                    startpos, endpos, n_iter):
-    path = None
-
-    obstacles_coordinates = np.array(obstacles_coordinates)
-    obstacles_dimensions = np.array(obstacles_dimensions)
-    assert obstacles_coordinates.size == obstacles_dimensions.size
-
-    obstacles = []
-    for i in range(len(obstacles_coordinates)):
-        obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
-
-
-    stepSize = 0.7
-
-    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
-
-    t0 = time.time()
-    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
-    t1 = time.time()
-    print("Time spent creating graph: {}".format(t1-t0))
-    if G.success:
-        path = dijkstra(G)
-        plot(G, obstacles, environment_id, path)
-    else:
-        plot(G, obstacles, environment_id)
-    return path
-
-def makeAnimation(n):
-    import matplotlib
-    fig = plt.figure()
+def makeAnimation(environment_id):
+    _, _, files = next(os.walk("./intermediate/"))
+    file_count = len(files)
+    fig = plt.figure(figsize=(8,8))
     ax = plt.gca()
     plt.axis('off')
     #initialization of animation, plot array of zeros 
@@ -442,36 +415,47 @@ def makeAnimation(n):
     ## create an AxesImage object
     imobj = ax.imshow(np.zeros((100, 100)), origin='lower', alpha=1.0, zorder=1, aspect=1 )
     anim = matplotlib.animation.FuncAnimation(fig, animate, init_func=init, repeat = True,
-                                frames=range(0,n), interval=200, blit=True, repeat_delay=1000)
-    f = r"./animation.mp4" 
-    writergif = matplotlib.animation.FFMpegWriter(fps=4) 
+                                frames=range(0,file_count), interval=200, blit=True, repeat_delay=1000)
+    f = r"./animation{}.gif".format(environment_id) 
+    writergif = matplotlib.animation.FFMpegWriter(fps=8) 
     anim.save(f, writer=writergif)
 
     plt.show()
 
+def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
+                    startpos, endpos, n_iter, make_animation = False):
+    path = None
+
+    obstacles_coordinates = np.array(obstacles_coordinates)
+    obstacles_dimensions = np.array(obstacles_dimensions)
+    assert obstacles_coordinates.size == obstacles_dimensions.size
+
+    obstacles = []
+    for i in range(len(obstacles_coordinates)):
+        obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
 
 
+    stepSize = 0.7
 
-# if __name__ == '__main__':
-#     path = None
-#     startpos = (-13., -13.)
-#     endpos = (10., 10.)
-#     boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
-#     obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
-#     obstacles += boundaryObstacles
-#     n_iter = 2000
-#     stepSize = 0.7
+    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+    
+    if make_animation:
+        files = glob.glob('./intermediate/*')
+        for f in files:
+            os.remove(f)
 
-#     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+    t0 = time.time()
+    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius, make_animation=make_animation)
+    t1 = time.time()
 
+    if make_animation:
+        makeAnimation( environment_id)
+    
 
-#     G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
-#     # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
-#     if G.success:
-#         t0 = time.time()
-#         path = dijkstra(G)
-#         t1 = time.time()
-#         print("Time spent computing shortest path {}".format(t1-t0))
-#         plot(G, obstacles, path)
-#     else:
-#         plot(G, obstacles)
+    print("Time spent creating graph: {}".format(t1-t0))
+    if G.success:
+        path = dijkstra(G)
+        plot(G, obstacles, environment_id, path)
+    else:
+        plot(G, obstacles, environment_id)
+    return path
