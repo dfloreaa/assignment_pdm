@@ -214,8 +214,8 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
     G = Graph(startpos, endpos)
 
     for i in range(n_iter):
-        if G.success == True:
-            break
+        # if G.success == True:
+        #     break
         # if (i/n_iter)%2 == 0:
         print("at", i)
         randvex = G.randomPosition()
@@ -305,7 +305,7 @@ def plot(G, obstacles, environment_id, path=None):
     '''
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,8))
 
     for obstacle in obstacles:
         rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='red')
@@ -324,7 +324,7 @@ def plot(G, obstacles, environment_id, path=None):
         lc2 = mc.LineCollection(paths, colors='blue', linewidths=3)
         ax.add_collection(lc2)
 
-    ax.autoscale()
+    plt.axis([-15, 15, -15, 15])
     ax.margins(0.1)
     plt.savefig('graph{}.png'.format(environment_id))
 
@@ -372,7 +372,7 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
     for i in range(len(obstacles_coordinates)):
         obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
 
-    n_iter = 4000
+
     stepSize = 0.7
 
     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node

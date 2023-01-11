@@ -43,13 +43,23 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                 1: {"obstacle_coordinates": [[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
                     "obstacle_dimensions": [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]],
                     "startpos": (-13, -13),
-                    "endpos": (13, 13)} 
+                    "endpos": (13, 13)},
+                2: {"obstacle_coordinates":[[-11.25, 11.25, 0], [-3.75, 11.25, 0], [3.75, 11.25, 0], [11.25, 11.25, 0],
+                                            [-11.25, 3.75, 0], [-3.75, 3.75, 0], [3.75, 3.75, 0], [11.25, 3.75, 0],
+                                            [-11.25, -3.75, 0], [-3.75, -3.75, 0], [3.75, -3.75, 0], [11.25, -3.75, 0],
+                                            [-11.25, -11.25, 0], [-3.75, -11.25, 0], [3.75, -11.25, 0], [11.25, -11.25, 0]],
+                    "obstacle_dimensions": [[1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1]],
+                    "startpos": (-7.5, -11.25),
+                    "endpos": (7.5, 11.25)}  
         }
 
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
-    environment_id = 1
+    environment_id = 2
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
@@ -60,7 +70,7 @@ if __name__ == "__main__":
 
     startpos = environments[environment_id]["startpos"]
     endpos = environments[environment_id]["endpos"]
-    n_iter = 4000
+    n_iter = 2000
     
 
     path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
