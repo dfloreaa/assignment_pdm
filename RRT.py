@@ -10,7 +10,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import collections  as mc
 from collections import deque
+import matplotlib.animation as animation
 import time
+import imageio as iio
+from pathlib import Path
 
 SAFETY_MARGIN = True
 
@@ -211,13 +214,19 @@ class Graph:
 
 def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
     ''' RRT star algorithm '''
+    fig = plt.figure()
     G = Graph(startpos, endpos)
+    n_succes = np.inf
+    n_ims = 0
 
     for i in range(n_iter):
-        # if G.success == True:
-        #     break
-        # if (i/n_iter)%2 == 0:
-        print("at", i)
+        if G.success == True and i == 1.5*n_succes:
+            break
+            
+        if i%50 == 0:
+            print("at", i)
+            n_ims += 1
+            intermediatePlot(G, obstacles, i/50)
         randvex = G.randomPosition()
         if isInObstacle(randvex, obstacles):
             continue
@@ -258,10 +267,10 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
                 G.distances[endidx] = min(G.distances[endidx], G.distances[newidx]+dist)
             except:
                 G.distances[endidx] = G.distances[newidx]+dist
-
+            if G.success == False:
+                n_succes = i
             G.success = True
-            #print('success')
-            # break
+    makeAnimation(n_ims)
     return G
 
 def dijkstra(G):
@@ -328,6 +337,28 @@ def plot(G, obstacles, environment_id, path=None):
     ax.margins(0.1)
     plt.savefig('graph{}.png'.format(environment_id))
 
+def intermediatePlot(G, obstacles, i):
+    px = [x for x, y in G.vertices]
+    py = [y for x, y in G.vertices]
+    fig, ax = plt.subplots(figsize=(8,8))
+
+    for obstacle in obstacles:
+        rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='red')
+        ax.add_artist(rect)
+
+    ax.scatter(px, py, c='cyan')
+    ax.scatter(G.startpos[0], G.startpos[1], c='black')
+    ax.scatter(G.endpos[0], G.endpos[1], c='black')
+    lines = [(G.vertices[edge[0]], G.vertices[edge[1]]) for edge in G.edges]
+    lc = mc.LineCollection(lines, colors='green', linewidths=2)
+    ax.add_collection(lc)
+
+    plt.axis([-15, 15, -15, 15])
+    ax.margins(0.1)
+    plt.savefig('intermediate/intermediate{}.png'.format(int(i)))
+    plt.close()
+
+
 
 def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
     G = RRT_star(startpos, endpos, obstacles, n_iter, radius, stepSize)
@@ -340,7 +371,6 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     '''
     obstacle_coordinates = x, y, orientation
     obstacle_dimensions = width, length, height
-        length >>>>>> width: this is independant of the orientation
     '''
     x = obstacle_coordinates[0]
     y = obstacle_coordinates[1]
@@ -387,6 +417,37 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
     else:
         plot(G, obstacles, environment_id)
     return path
+
+def makeAnimation(n):
+    import matplotlib
+    fig = plt.figure()
+    ax = plt.gca()
+    plt.axis('off')
+    #initialization of animation, plot array of zeros 
+    def init():
+        imobj.set_data(np.zeros((100, 100)))
+
+        return  imobj,
+
+    def animate(i):
+        ## Read in picture
+        fname = "./intermediate/intermediate%0d.png" % i 
+
+        img = matplotlib.image.imread(fname)[-1::-1]
+        imobj.set_data(img)
+
+        return  imobj,
+
+
+    ## create an AxesImage object
+    imobj = ax.imshow(np.zeros((100, 100)), origin='lower', alpha=1.0, zorder=1, aspect=1 )
+    anim = matplotlib.animation.FuncAnimation(fig, animate, init_func=init, repeat = True,
+                                frames=range(0,n), interval=200, blit=True, repeat_delay=1000)
+    f = r"./animation.mp4" 
+    writergif = matplotlib.animation.FFMpegWriter(fps=4) 
+    anim.save(f, writer=writergif)
+
+    plt.show()
 
 
 
