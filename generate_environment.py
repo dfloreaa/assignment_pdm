@@ -22,16 +22,10 @@ def run_env(obstacles_coordinates, obstacles_dimensions,
     dim = np.array([0.2, 8, 0.5])
 
     """"Coordinates for the walls"""
-    # walls = [[x_position, y_position, orientation], ...]
-    walls = [
-    [0, 12, 0], [4, 12, 0],
-    [0, 4, 0], [4, 4, 0]]
-    env.add_shapes(
-            shape_type="GEOM_BOX", dim=dim, mass=0, poses_2d=walls
-        )
-    env.add_shapes(
-        shape_type="GEOM_BOX", dim=np.array([0.2, 4, 0.5]), mass=0, poses_2d=[[2, 16, 0.5 * np.pi]]
-    )
+    for i in range(len(obstacles_coordinates)):
+            env.add_shapes(
+                shape_type="GEOM_BOX", dim=obstacles_dimensions[i], mass=0, poses_2d=[obstacles_coordinates[i]]
+            )
 
     # env.add_walls(dim = dim, poses_2d = walls)
     print("Starting episode")
@@ -42,10 +36,14 @@ def run_env(obstacles_coordinates, obstacles_dimensions,
     env.close()
     return history
 
-environments = {0: [[[-5, -5, 0], [5, 5, 0]] ,
-                    [[20, 1, 1], [20, 1, 1]]],
-        1: [[[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
-            [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]]]
+environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
+                    "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13)},
+                1: {"obstacle_coordinates": [[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
+                    "obstacle_dimensions": [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13)} 
         }
 
 # Environment consists of obstacles coordinates and dimensions
@@ -57,11 +55,11 @@ if __name__ == "__main__":
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
                             [0.5, 30, 1], [30, 0.5, 1] ]
 
-    boundary_coordinates += environments[environment_id][0]
-    boundary_dimensions += environments[environment_id][1]
+    boundary_coordinates += environments[environment_id]["obstacle_coordinates"]
+    boundary_dimensions += environments[environment_id]["obstacle_dimensions"]
 
-    startpos = (-13., -13.)
-    endpos = (13., 13.)
+    startpos = environments[environment_id]["startpos"]
+    endpos = environments[environment_id]["endpos"]
     n_iter = 4000
     
 
