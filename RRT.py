@@ -10,7 +10,11 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import collections  as mc
 from collections import deque
+import matplotlib.animation as animation
+import matplotlib
 import time
+import os
+import glob
 
 SAFETY_MARGIN = True
 
@@ -209,13 +213,21 @@ class Graph:
         return posx, posy
 
 
-def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
+def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_animation=False):
     ''' RRT star algorithm '''
+    fig = plt.figure()
     G = Graph(startpos, endpos)
+    n_succes = np.inf
+    n_ims = 0
 
     for i in range(n_iter):
-        # if (i/n_iter)%2 == 0:
-        print("at", i)
+        if G.success == True and i == 1.5*n_succes:
+            break
+            
+        if i%50 == 0:
+            print("at", i)
+            if make_animation:
+                intermediatePlot(G, obstacles, i/50)
         randvex = G.randomPosition()
         if isInObstacle(randvex, obstacles):
             continue
@@ -256,10 +268,9 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1):
                 G.distances[endidx] = min(G.distances[endidx], G.distances[newidx]+dist)
             except:
                 G.distances[endidx] = G.distances[newidx]+dist
-
+            if G.success == False:
+                n_succes = i
             G.success = True
-            #print('success')
-            # break
     return G
 
 def dijkstra(G):
@@ -303,7 +314,7 @@ def plot(G, obstacles, environment_id, path=None):
     '''
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,8))
 
     for obstacle in obstacles:
         rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='red')
@@ -322,9 +333,31 @@ def plot(G, obstacles, environment_id, path=None):
         lc2 = mc.LineCollection(paths, colors='blue', linewidths=3)
         ax.add_collection(lc2)
 
-    ax.autoscale()
+    plt.axis([-15, 15, -15, 15])
     ax.margins(0.1)
     plt.savefig('graph{}.png'.format(environment_id))
+
+def intermediatePlot(G, obstacles, i):
+    px = [x for x, y in G.vertices]
+    py = [y for x, y in G.vertices]
+    fig, ax = plt.subplots(figsize=(6,6))
+
+    for obstacle in obstacles:
+        rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='red')
+        ax.add_artist(rect)
+
+    ax.scatter(px, py, c='cyan')
+    ax.scatter(G.startpos[0], G.startpos[1], c='black')
+    ax.scatter(G.endpos[0], G.endpos[1], c='black')
+    lines = [(G.vertices[edge[0]], G.vertices[edge[1]]) for edge in G.edges]
+    lc = mc.LineCollection(lines, colors='green', linewidths=2)
+    ax.add_collection(lc)
+
+    plt.axis([-15, 15, -15, 15])
+    ax.margins(0.1)
+    plt.savefig('intermediate/intermediate{}.png'.format(int(i)))
+    plt.close()
+
 
 
 def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
@@ -338,7 +371,6 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     '''
     obstacle_coordinates = x, y, orientation
     obstacle_dimensions = width, length, height
-        length >>>>>> width: this is independant of the orientation
     '''
     x = obstacle_coordinates[0]
     y = obstacle_coordinates[1]
@@ -358,11 +390,42 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
 
 
 
-def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id):
+def makeAnimation(environment_id):
+    _, _, files = next(os.walk("./intermediate/"))
+    file_count = len(files)
+    fig = plt.figure(figsize=(8,8))
+    ax = plt.gca()
+    plt.axis('off')
+    #initialization of animation, plot array of zeros 
+    def init():
+        imobj.set_data(np.zeros((100, 100)))
+
+        return  imobj,
+
+    def animate(i):
+        ## Read in picture
+        fname = "./intermediate/intermediate%0d.png" % i 
+
+        img = matplotlib.image.imread(fname)[-1::-1]
+        imobj.set_data(img)
+
+        return  imobj,
+
+
+    ## create an AxesImage object
+    imobj = ax.imshow(np.zeros((100, 100)), origin='lower', alpha=1.0, zorder=1, aspect=1 )
+    anim = matplotlib.animation.FuncAnimation(fig, animate, init_func=init, repeat = True,
+                                frames=range(0,file_count), interval=200, blit=True, repeat_delay=1000)
+    f = r"./animation{}.gif".format(environment_id) 
+    writergif = matplotlib.animation.FFMpegWriter(fps=8) 
+    anim.save(f, writer=writergif)
+
+    plt.show()
+
+def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
+                    startpos, endpos, n_iter, make_animation = False):
     path = None
-    startpos = (-10., -10.)
-    endpos = (10., 10.)
-    
+
     obstacles_coordinates = np.array(obstacles_coordinates)
     obstacles_dimensions = np.array(obstacles_dimensions)
     assert obstacles_coordinates.size == obstacles_dimensions.size
@@ -371,48 +434,28 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id)
     for i in range(len(obstacles_coordinates)):
         obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
 
-    n_iter = 2000
+
     stepSize = 0.7
 
     radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+    
+    if make_animation:
+        files = glob.glob('./intermediate/*')
+        for f in files:
+            os.remove(f)
 
+    t0 = time.time()
+    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius, make_animation=make_animation)
+    t1 = time.time()
 
-    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
+    if make_animation:
+        makeAnimation( environment_id)
+    
+
+    print("Time spent creating graph: {}".format(t1-t0))
     if G.success:
-        t0 = time.time()
         path = dijkstra(G)
-        t1 = time.time()
-        print("Time spent computing shortest path {}".format(t1-t0))
         plot(G, obstacles, environment_id, path)
     else:
         plot(G, obstacles, environment_id)
     return path
-
-
-
-
-if __name__ == '__main__':
-    path = None
-    startpos = (-13., -13.)
-    endpos = (10., 10.)
-    boundaryObstacles = [Obstacle(0, -15, 30, 1), Obstacle(-15, 0, 1, 30), Obstacle(15, 0, 1, 30), Obstacle(0,15, 30,1)]
-    obstacles = [Obstacle(0, 2, 1, 2), Obstacle(5, 8, 2, 5), Obstacle(-10, 8, 1, 7)] 
-    obstacles += boundaryObstacles
-    n_iter = 2000
-    stepSize = 0.7
-
-    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
-
-
-    G = RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius)
-#     # G = RRT(startpos, endpos, obstacles, n_iter, radius, stepSize)
-    if G.success:
-        t0 = time.time()
-        path = dijkstra(G)
-        t1 = time.time()
-        print("Time spent computing shortest path {}".format(t1-t0))
-        # plot(G, obstacles, path)
-    # else:
-        # plot(G, obstacles)
-
-        print(path)
