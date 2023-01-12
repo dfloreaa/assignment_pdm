@@ -8,6 +8,7 @@ from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
 from generate_path import generatePath
+from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
