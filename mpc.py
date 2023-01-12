@@ -40,10 +40,10 @@ class MPC():
                 u[1, t] <= MAX_STEER,
             ]
 
-            # Collision avoidance against objectives
-            for mov_obs in moving_obstacles:
+            # # Collision avoidance against objectives
+            # for mov_obs in moving_obstacles:
 
-                constraints += [opt.abs(x[0, t + 1] - mov_obs.x) <= 1]
+            #     constraints += [opt.abs(x[0, t + 1] - mov_obs.x) <= 1]
 
             # Actuation rate of change
             if t < (time_horizon - 1):

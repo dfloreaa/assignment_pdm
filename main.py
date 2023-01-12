@@ -158,7 +158,39 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         # print([speed, ang_vel])
 
-        ob, _, _, _ = env.step([speed, steering_angle_delta, 1, 0.2])
+        mu = 0.7 # Typical friction coefficient for a patterned tire in dry conditions
+        g = 9.81 # Standard gravity
+
+        # Breaking distance
+        d_crit = 1.5 * speed**2 / (2*mu*g)
+        d_safe = 2 * speed**2 / (2*mu*g)
+        pos = robots[0].state["joint_state"]["position"]
+
+        print(d_crit)
+
+        x_size = abs(1.7526/2 * np.sin(pos[2])) + abs(2.15/2 * np.cos(pos[2]))
+        y_size = abs(1.7526/2 * np.cos(pos[2])) + abs(2.15/2 * np.sin(pos[2]))
+
+        for robot in robots[1:]:
+
+            robot_x = robot.state["joint_state"]["position"][0]
+            robot_y = robot.state["joint_state"]["position"][1]
+
+            dist1 = np.sqrt((pos[0] + x_size - (robot_x))**2 + (pos[1] - y_size - robot_y)**2) - robot.width
+            dist3 = np.sqrt((pos[0] + x_size - (robot_x))**2 + (pos[1] + y_size - robot_y)**2) - robot.width
+            dist2 = np.sqrt((pos[0] - x_size - (robot_x))**2 + (pos[1] + y_size - robot_y)**2) - robot.width
+            dist4 = np.sqrt((pos[0] - x_size - (robot_x))**2 + (pos[1] - y_size - robot_y)**2) - robot.width
+
+            # print(dist1, dist2, dist3, dist4)
+
+            if dist1 < d_crit or dist2 < d_crit or dist3 < d_crit or dist4 < d_crit:
+                print('Warning, impending collision')
+                speed = 0
+                steering_angle_delta = 0
+
+        second_speed = 1.1 if int(sim_step/25) % 2 else -1.1
+
+        ob, _, _, _ = env.step([speed, steering_angle_delta, second_speed, 0])
         pos = robots[0].state["joint_state"]["position"]
 
         x_sim[0, sim_step + 1] = pos[0]
@@ -293,6 +325,6 @@ if __name__ == "__main__":
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
     
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-6, -13, 0.0, 0.5, 0.5]], render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 0.5, 0.5]], render=True)
 
     #TODO: Add obstacles to performance plot
