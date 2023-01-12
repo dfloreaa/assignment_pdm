@@ -3,7 +3,7 @@ import gym
 from urdfenvs.robots.prius import Prius
 import numpy as np
 import car_model as cm
-import mpc2 as mpc
+import mpc
 from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
