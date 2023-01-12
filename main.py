@@ -8,6 +8,7 @@ from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
 from generate_path import generatePath
+from moving_obstacle import MovingObstacle
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
@@ -16,10 +17,13 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps=500, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 500, render=False, goal=True, obstacles=True):
     robots = [
         Prius(mode="vel"),
     ]
+
+    for moving_obs in moving_obstacles:
+        robots.append(MovingObstacle("vel", moving_obs[0], moving_obs[1], moving_obs[2], moving_obs[3], moving_obs[4]))
 
     L = robots[0]._wheel_distance
 
@@ -37,7 +41,8 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
     x_sim = np.zeros((N, n_steps))
     u_sim = np.zeros((M, n_steps - 1))
 
-    path_points = np.load("./paths/path{}.npy".format(environment_id))
+    current_folder = "assignment_pdm" if os.getcwd()[:-13] != "gym_envs_urdf" else "."
+    path_points = np.load(f"{current_folder}/paths/path{environment_id}.npy")
 
     x_points = []
     y_points = []
@@ -64,7 +69,21 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
     x0[3] = np.radians(-0)  # yaw
     x_sim[:, 0] = x0  # simulation_starting conditions
 
-    ob = env.reset(pos = np.array(x0[:3]))
+    n_per_robot = env.n_per_robot()
+    ns_per_robot = env.ns_per_robot()
+    
+    initial_positions = np.array([np.zeros(n) for n in ns_per_robot])
+    for i in range(len(initial_positions)):
+        if ns_per_robot[i] != n_per_robot[i]:
+            initial_positions[i][0:2] = np.array([0.0, i])
+        
+    initial_positions[0] = np.array(x0[:3])
+
+    for i in range(1, len(robots)):
+        initial_positions[i] = np.array([robots[i].x, robots[i].y, robots[i].angle])
+
+    ob = env.reset(pos = initial_positions)  
+
     print(f"Initial observation : {ob}")
 
     print("Starting episode")
@@ -113,7 +132,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
         target, _ = mpc.get_ref_trajectory(x_sim[:, sim_step], path, REF_VEL, controller)
 
         x_mpc, u_mpc = controller.optimize_linearized_model(
-            A, B, C, start_state, target, time_horizon=10, verbose=False
+            A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=10, verbose=False
         )
 
         # retrieved optimized U and assign to u_bar to linearize in next step
@@ -131,7 +150,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
 
         # print([speed, ang_vel])
 
-        ob, _, _, _ = env.step([speed, steering_angle_delta])
+        ob, _, _, _ = env.step([speed, steering_angle_delta, 1, 0.2])
         pos = robots[0].state["joint_state"]["position"]
 
         x_sim[0, sim_step + 1] = pos[0]
@@ -234,12 +253,15 @@ if __name__ == "__main__":
     environment_id = 1
     
     environment_dict = environments[environment_id]
-    if not os.path.exists("./paths/path{}.npy".format(environment_id)) or MAKE_ANIMATION:
+
+    current_folder = "assignment_pdm" if os.getcwd()[:-13] != "gym_envs_urdf" else "."
+
+    if not os.path.exists(f"{current_folder}/paths/path{environment_id}.npy") or MAKE_ANIMATION:
         generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = MAKE_ANIMATION)
 
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
     
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-6, -13, 0.0, 0.5, 0.5]], render=True)
 
     #TODO: Add obstacles to performance plot
