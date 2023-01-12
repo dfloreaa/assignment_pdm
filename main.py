@@ -141,6 +141,18 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
         history.append(ob)
     env.close()
 
+    # Add sensor
+    sensor = ObstacleSensor()
+    env.add_sensor(sensor, [0])
+
+    history = []
+    for _ in range(n_steps):
+        action = defaultAction
+        ob, reward, done, info = env.step(action)
+        # In observations, information about obstacles is stored in ob['obstacleSensor']
+        history.append(ob)
+    env.close()
+
     # plot trajectory
     grid = plt.GridSpec(4, 5)
 
