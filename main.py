@@ -8,6 +8,8 @@ from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
 from generate_path import generatePath
+import matplotlib.patches as patches
+from RRT import Obstacle
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 
 DELTA_TIME = 0.1
@@ -16,6 +18,8 @@ MAX_ACC = 1.0  # m/ss
 MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
+
+
 
 def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps=500, render=False, goal=True, obstacles=True):
     robots = [
@@ -160,11 +164,22 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
     plt.figure(figsize=(15, 10))
 
     plt.subplot(grid[0:4, 0:4])
+    ax = plt.gca()
+    circle = patches.Circle(environments[environment_id]['startpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    circle = patches.Circle(environments[environment_id]['endpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    for i in range(len(obstacles_coordinates)):
+        obstacle = Obstacle(obstacles_coordinates[i][0], obstacles_coordinates[i][1],
+                            obstacles_dimensions[i][0], obstacles_dimensions[i][1])
+        rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='black')
+        ax.add_artist(rect)
     plt.plot(path[0, :], path[1, :], "b+")
     plt.plot(x_sim[0, :], x_sim[1, :], color = "red")
     plt.axis("equal")
     plt.ylabel("y")
     plt.xlabel("x")
+    plt.axis([-15, 15, -15, 15])
 
     plt.subplot(grid[0, 4])
     plt.plot(u_sim[0, :])
@@ -191,6 +206,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
     plt.savefig('./performance/performance{}.png'.format(environment_id))
 
     return history
+
 
 environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
@@ -244,7 +260,7 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
-    environment_id = 1
+    environment_id = 3
     
     environment_dict = environments[environment_id]
     if not os.path.exists("./paths/path{}.npy".format(environment_id)) or MAKE_ANIMATION:
