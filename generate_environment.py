@@ -1,3 +1,4 @@
+import os
 import gym
 from urdfenvs.robots.prius import Prius
 import numpy as np
@@ -88,8 +89,8 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
-    MAKE_ANIMATION = True
-    environment_id = 1
+    MAKE_ANIMATION = False
+    environment_id = 0
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
@@ -107,7 +108,11 @@ if __name__ == "__main__":
     path = pathComputation(obstacle_coordinates, obstacle_dimensions, environment_id, 
                             startpos, endpos, n_iter, make_animation= MAKE_ANIMATION)
 
-    np.save("assignment_pdm/path.npy", np.array(path))
+    # save the plot
+    if not os.path.exists("./paths"):
+        os.makedirs("./paths")
+    
+    np.save("./paths/path{}.npy".format(environment_id), np.array(path))
     print(path)
 
     run_env(obstacle_coordinates, obstacle_dimensions, render=True)
