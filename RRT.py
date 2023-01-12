@@ -342,6 +342,8 @@ def plot(G, obstacles, environment_id, path=None):
     plt.savefig('graph{}.png'.format(environment_id))
 
 def intermediatePlot(G, obstacles, i):
+    if not os.path.exists("./pintermediate"):
+        os.makedirs("./intermediate")
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
     fig, ax = plt.subplots(figsize=(6,6))
@@ -381,17 +383,6 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     width = obstacle_dimensions[0]
     height = obstacle_dimensions[1]
     return Obstacle(x, y, width, height)
-    # possible_orientations = [0, 0.5*np.pi, np.pi, 1.5*np.pi]
-    # if obstacle_coordinates[2] in possible_orientations:
-    #     if obstacle_coordinates[2] == 0 or obstacle_coordinates[2] == np.pi:
-    
-        # else:
-        #     width = obstacle_dimensions[1]
-        #     height = obstacle_dimensions[0]
-    
-    # else:
-    #     print("Not supported obstacle orientation")
-
 
 
 def makeAnimation(environment_id):

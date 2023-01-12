@@ -7,6 +7,7 @@ import mpc2 as mpc
 from scipy.integrate import odeint
 import pybullet as p
 from matplotlib import pyplot as plt
+from generate_path import generatePath
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
@@ -224,33 +225,18 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
                                             [15, 0, 0], [0, 15, 0]],
                     "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
-                                             [0.5, 30, 1], [30, 0.5, 1] ]}
-        }
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
 
-                3:  {"obstacle_coordinates":[[1.5, 2, 0], [4, 4, 0], [9, 2, 0], [13.5, 1, 0], [2, 6, 0], [12.5, 5, 0],
-                                            [8, 5, 0], [4, 9, 0], [10.5, 11, 0], [4.5, 12, 0],
-                                            [5, 2, 0], [8, 1, 0], [12, 2, 0], [2, 7.5, 0], [7, 6, 0], [9, 9, 0], [4, 13.5, 0],
-                                            [12, 8, 0], [10.5, 14.5, 0]],
-                    "obstacle_dimensions": [[3, .5, 1], [2, .5, 1], [2, .5, 1], [3, .5, 1], [4, .5, 1], [5, .5, 1],
-                                            [2, .5, 1], [4, .5, 1], [3, .5, 1], [5, .5, 1],
-                                            [.5, 4, 1], [.5, 1, 1], [.5, 2, 1], [.5, 3, 1], [.5, 2, 1], [.5, 4, 1], [.5, 3, 1],
-                                            [2, 2, 1], [3, 1, 1]],
-                    "startpos": (1, 1),
-                    "endpos": (14, 14),
-                    "boundary_coordinates" : [[7.5, 0, 0], [7.5, 15, 0],
-                                            [0, 7.5, 0], [15, 7.5, 0]],  
-                    "boundary_dimensions" : [[15, 0.5, 1], [15, 0.5, 1], 
-                                            [0.5, 15, 1], [0.5, 15, 1]]}
 }
 
 if __name__ == "__main__":
     environment_id = 3
-    boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
-                    [15, 0, 0], [0, 15, 0]]    
-    boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
-                            [0.5, 30, 1], [30, 0.5, 1] ]
+    
+    environment_dict = environments[environment_id]
+    if not os.path.exists("./paths/path{}.npy".format(environment_id)):
+        generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = False)
 
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
-
+    
     run_env(obstacle_coordinates, obstacle_dimensions, environment_id, render=True)
