@@ -9,6 +9,7 @@ import pybullet as p
 from matplotlib import pyplot as plt
 from generate_path import generatePath
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
+from obstacle_avoidance import obstacle_avoid
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
@@ -98,6 +99,10 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
                 shape_type="GEOM_BOX", dim=obstacles_dimensions[i], mass=0, poses_2d=[obstacles_coordinates[i]]
             )
 
+    # Add sensor
+    sensor = ObstacleSensor()
+    env.add_sensor(sensor, [0])
+    
     for sim_step in range(n_steps):
 
         # dynamics starting state w.r.t. robot are always null except vel
@@ -142,17 +147,16 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, n_steps
         history.append(ob)
     env.close()
 
-    # Add sensor
-    sensor = ObstacleSensor()
-    env.add_sensor(sensor, [0])
-
-    history = []
+    history2 = []
     for _ in range(n_steps):
-        action = defaultAction
         ob, reward, done, info = env.step(action)
         # In observations, information about obstacles is stored in ob['obstacleSensor']
-        history.append(ob)
+        history2.append(ob)
     env.close()
+
+    # Obstacle avoidance
+    obstacles = False
+    obstacle_avoid(n_steps, history2, obstacles)
 
     # plot trajectory
     grid = plt.GridSpec(4, 5)
