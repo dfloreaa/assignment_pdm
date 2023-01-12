@@ -221,7 +221,9 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_ani
     n_ims = 0
 
     for i in range(n_iter):
-        if G.success == True and i == 1.5*n_succes:
+        if G.success == True and i >n_succes:
+            if make_animation:
+                intermediatePlot(G, obstacles, i/50+1)
             break
             
         if i%50 == 0:
@@ -270,7 +272,9 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_ani
                 G.distances[endidx] = G.distances[newidx]+dist
             if G.success == False:
                 n_succes = i
+                print("Success at ", i)
             G.success = True
+            
     return G
 
 def dijkstra(G):
@@ -437,7 +441,7 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
 
     stepSize = 0.7
 
-    radius = 2 # New nodes will be accepted if they are inside this radius of a neighbouring node
+    radius = 1 # New nodes will be accepted if they are inside this radius of a neighbouring node
     
     if make_animation:
         files = glob.glob('./intermediate/*')

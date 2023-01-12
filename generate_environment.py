@@ -39,11 +39,21 @@ def run_env(obstacles_coordinates, obstacles_dimensions,
 environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
                     "startpos": (-13, -13),
-                    "endpos": (13, 13)},
+                    "endpos": (13, 13),
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
                 1: {"obstacle_coordinates": [[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
                     "obstacle_dimensions": [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]],
                     "startpos": (-13, -13),
-                    "endpos": (13, 13)},
+                    "endpos": (13, 13), 
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
                 2: {"obstacle_coordinates":[[-11.25, 11.25, 0], [-3.75, 11.25, 0], [3.75, 11.25, 0], [11.25, 11.25, 0],
                                             [-11.25, 3.75, 0], [-3.75, 3.75, 0], [3.75, 3.75, 0], [11.25, 3.75, 0],
                                             [-11.25, -3.75, 0], [-3.75, -3.75, 0], [3.75, -3.75, 0], [11.25, -3.75, 0],
@@ -53,31 +63,51 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                                             [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
                                             [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1]],
                     "startpos": (-11.25, -13.5),
-                    "endpos": (11.25, 13.5)}  
+                    "endpos": (11.25, 13.5), 
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
+                3:  {"obstacle_coordinates":[[1.5, 2, 0], [4, 4, 0], [9, 2, 0], [13.5, 1, 0], [2, 6, 0], [12.5, 5, 0],
+                                            [8, 5, 0], [4, 9, 0], [10.5, 11, 0], [4.5, 12, 0],
+                                            [5, 2, 0], [8, 1, 0], [12, 2, 0], [2, 7.5, 0], [7, 6, 0], [9, 9, 0], [4, 13.5, 0],
+                                            [12, 8, 0], [10.5, 14.5, 0]],
+                    "obstacle_dimensions": [[3, .5, 1], [2, .5, 1], [2, .5, 1], [3, .5, 1], [4, .5, 1], [5, .5, 1],
+                                            [2, .5, 1], [4, .5, 1], [3, .5, 1], [5, .5, 1],
+                                            [.5, 4, 1], [.5, 1, 1], [.5, 2, 1], [.5, 3, 1], [.5, 2, 1], [.5, 4, 1], [.5, 3, 1],
+                                            [2, 2, 1], [3, 1, 1]],
+                    "startpos": (1, 1),
+                    "endpos": (14, 14),
+                    "boundary_coordinates" : [[7.5, 0, 0], [7.5, 15, 0],
+                                            [0, 7.5, 0], [15, 7.5, 0]],  
+                    "boundary_dimensions" : [[15, 0.5, 1], [15, 0.5, 1], 
+                                            [0.5, 15, 1], [0.5, 15, 1]]}
         }
 
 # Environment consists of obstacles coordinates and dimensions
 
 if __name__ == "__main__":
-    MAKE_ANIMATION = False
-    environment_id = 0
+    MAKE_ANIMATION = True
+    environment_id = 1
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
                             [0.5, 30, 1], [30, 0.5, 1] ]
 
-    boundary_coordinates += environments[environment_id]["obstacle_coordinates"]
-    boundary_dimensions += environments[environment_id]["obstacle_dimensions"]
+
+    obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
+    obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
     startpos = environments[environment_id]["startpos"]
     endpos = environments[environment_id]["endpos"]
-    n_iter = 3000
+    n_iter = 20000
     
 
-    path = pathComputation(boundary_coordinates, boundary_dimensions, environment_id, 
+    path = pathComputation(obstacle_coordinates, obstacle_dimensions, environment_id, 
                             startpos, endpos, n_iter, make_animation= MAKE_ANIMATION)
 
     np.save("assignment_pdm/path.npy", np.array(path))
     print(path)
 
-    run_env(boundary_coordinates, boundary_dimensions, render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, render=True)
