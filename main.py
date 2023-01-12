@@ -9,6 +9,10 @@ import pybullet as p
 from matplotlib import pyplot as plt
 from generate_path import generatePath
 from moving_obstacle import MovingObstacle
+import matplotlib.patches as patches
+from RRT import Obstacle
+from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
+from obstacle_avoidance import obstacle_avoid
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
@@ -116,6 +120,10 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
                 shape_type="GEOM_BOX", dim=obstacles_dimensions[i], mass=0, poses_2d=[obstacles_coordinates[i]]
             )
 
+    # Add sensor
+    sensor = ObstacleSensor()
+    env.add_sensor(sensor, [0])
+    
     for sim_step in range(n_steps):
 
         # dynamics starting state w.r.t. robot are always null except vel
@@ -160,17 +168,39 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         history.append(ob)
     env.close()
 
+    history2 = []
+    for _ in range(n_steps):
+        ob, reward, done, info = env.step(action)
+        # In observations, information about obstacles is stored in ob['obstacleSensor']
+        history2.append(ob)
+    env.close()
+
+    # Obstacle avoidance
+    obstacles = False
+    obstacle_avoid(n_steps, history2, obstacles)
+
     # plot trajectory
     grid = plt.GridSpec(4, 5)
 
     plt.figure(figsize=(15, 10))
 
     plt.subplot(grid[0:4, 0:4])
+    ax = plt.gca()
+    circle = patches.Circle(environments[environment_id]['startpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    circle = patches.Circle(environments[environment_id]['endpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    for i in range(len(obstacles_coordinates)):
+        obstacle = Obstacle(obstacles_coordinates[i][0], obstacles_coordinates[i][1],
+                            obstacles_dimensions[i][0], obstacles_dimensions[i][1])
+        rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='black')
+        ax.add_artist(rect)
     plt.plot(path[0, :], path[1, :], "b+")
     plt.plot(x_sim[0, :], x_sim[1, :], color = "red")
     plt.axis("equal")
     plt.ylabel("y")
     plt.xlabel("x")
+    plt.axis([-15, 15, -15, 15])
 
     plt.subplot(grid[0, 4])
     plt.plot(u_sim[0, :])
@@ -197,6 +227,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     plt.savefig('./performance/performance{}.png'.format(environment_id))
 
     return history
+
 
 environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
@@ -250,7 +281,7 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
-    environment_id = 1
+    environment_id = 3
     
     environment_dict = environments[environment_id]
 
