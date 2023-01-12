@@ -230,13 +230,16 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 }
 
 if __name__ == "__main__":
-    environment_id = 3
+    MAKE_ANIMATION = False
+    environment_id = 1
     
     environment_dict = environments[environment_id]
-    if not os.path.exists("./paths/path{}.npy".format(environment_id)):
-        generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = False)
+    if not os.path.exists("./paths/path{}.npy".format(environment_id)) or MAKE_ANIMATION:
+        generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = MAKE_ANIMATION)
 
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
     
     run_env(obstacle_coordinates, obstacle_dimensions, environment_id, render=True)
+
+    #TODO: Add obstacles to performance plot
