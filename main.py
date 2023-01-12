@@ -211,6 +211,22 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
                                              [0.5, 30, 1], [30, 0.5, 1] ]},
 
+                3:  {"obstacle_coordinates":[[-12, -11, 0], [-7, -7, 0], [3, -11, 0], [12, -13, 0], [-11, -3, 0], [10, -5, 0],
+                                            [1, -1, 0], [-7, 3, 0], [6, 7, 0], [-6, 9, 0],
+                                            [-5, -11, 0], [1, -13, 0], [9, -11, 0], [-11, 0, 0], [-1, -3, 0], [3, 3, 0], [-7, 12, 0],
+                                            [9, 1, 0], [6, 14, 0]],
+                    "obstacle_dimensions": [[6, .5, 1], [4, .5, 1], [4, .5, 1], [6, .5, 1], [8, .5, 1], [10, .5, 1],
+                                            [4, .5, 1], [8, .5, 1], [6, .5, 1], [10, .5, 1],
+                                            [.5, 8, 1], [.5, 4, 1], [.5, 4, 1], [.5, 6, 1], [.5, 4, 1], [.5, 8, 1], [.5, 6, 1],
+                                            [4, 4, 1], [6, 2, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13),
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]}
+        }
+
                 3:  {"obstacle_coordinates":[[1.5, 2, 0], [4, 4, 0], [9, 2, 0], [13.5, 1, 0], [2, 6, 0], [12.5, 5, 0],
                                             [8, 5, 0], [4, 9, 0], [10.5, 11, 0], [4.5, 12, 0],
                                             [5, 2, 0], [8, 1, 0], [12, 2, 0], [2, 7.5, 0], [7, 6, 0], [9, 9, 0], [4, 13.5, 0],
@@ -228,7 +244,7 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 }
 
 if __name__ == "__main__":
-    environment_id = 0
+    environment_id = 3
     boundary_coordinates = [[0, -15, 0], [-15, 0, 0],
                     [15, 0, 0], [0, 15, 0]]    
     boundary_dimensions = [[30, 0.5, 1], [0.5, 30, 1], 
@@ -237,6 +253,4 @@ if __name__ == "__main__":
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
-    # boundary_coordinates += environments[environment_id]["obstacle_coordinates"]
-    # boundary_dimensions += environments[environment_id]["obstacle_dimensions"]
     run_env(obstacle_coordinates, obstacle_dimensions, environment_id, render=True)
