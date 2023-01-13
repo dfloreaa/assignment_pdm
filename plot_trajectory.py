@@ -55,3 +55,12 @@ def plot(path, environments, environment_id, obstacles_coordinates, obstacles_di
 
     plt.savefig(path_directory)
     return
+
+def plot_distance(n_robots, dist_obstacles):
+    plt.figure(figsize=(10, 10))
+    y_zero = np.zeros((dist_obstacles.shape[0], 1))
+    plt.plot(y_zero, label = "y = 0")
+    for i in range(1, n_robots):
+        plt.plot(dist_obstacles[:, i - 1], label = f"MO #{i}")
+    plt.legend(loc='best')
+    plt.show()

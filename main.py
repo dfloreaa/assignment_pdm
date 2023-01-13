@@ -20,7 +20,7 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 20, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 300, render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
@@ -112,7 +112,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         initial_positions[i] = np.array([robots[i].x, robots[i].y, robots[i].angle])
 
     ob = env.reset(pos = initial_positions)  
-
+    p.resetDebugVisualizerCamera(cameraDistance = 2, cameraYaw = 0, cameraPitch = -89.9, cameraTargetPosition=[0, 0, 15])
 
     """----- ADD WALLS TO THE SIMULATION ------"""
     # Dimensions for the walls (dim = [width, length, height])
@@ -222,15 +222,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     # obstacle_avoid(n_steps, history2, obstacles)
 
     plot_trajectory.plot(path, environments, environment_id, obstacle_coordinates, obstacles_dimensions, x_sim, u_sim)
-
-    # from matplotlib import pyplot as plt
-    # for i in range(1, len(robots)):
-    #     plt.plot(d_obs[:, i - 1], label = f"MO #{i}")
-    # plt.legend(loc='best')
-    # plt.show()
-
-    while True:
-        continue
+    plot_trajectory.plot_distance(n_robots = len(robots), dist_obstacles = d_obs)
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
