@@ -293,7 +293,12 @@ def plot(G, obstacles, environment_id, path=None):
     plt.axis([-15, 15, -15, 15])
     ax.margins(0.1)
 
-    plt.savefig('graph{}.png'.format(environment_id))
+    file_folder = os.path.dirname(os.path.realpath(__file__))
+    path_directory = f"{file_folder}/graph"
+    if not os.path.exists(path_directory):
+        os.makedirs(path_directory)
+
+    plt.savefig(path_directory + '/graph{}.png'.format(environment_id))
 
 def intermediatePlot(G, obstacles, i):
     file_folder = os.path.dirname(os.path.realpath(__file__))
@@ -360,9 +365,15 @@ def makeAnimation(environment_id):
     imobj = ax.imshow(np.zeros((100, 100)), origin='lower', alpha=1.0, zorder=1, aspect=1 )
     anim = matplotlib.animation.FuncAnimation(fig, animate, init_func=init, repeat = True,
                                 frames=range(0,file_count), interval=200, blit=True, repeat_delay=1000)
-    f = r"./animation{}.gif".format(environment_id) 
+    
+    file_folder = os.path.dirname(os.path.realpath(__file__))
+    path_directory = f"{file_folder}/animation"
+    if not os.path.exists(path_directory):
+        os.makedirs(path_directory)
+
+    save_location = f"{file_folder}/animation/animation{environment_id}.gif"
     writergif = matplotlib.animation.FFMpegWriter(fps=8) 
-    anim.save(f, writer=writergif)
+    anim.save(save_location, writer=writergif)
 
 def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
                     startpos, endpos, n_iter, make_animation = False):
