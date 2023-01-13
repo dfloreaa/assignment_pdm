@@ -2,6 +2,7 @@ import os
 import gym
 from urdfenvs.robots.prius import Prius
 import numpy as np
+import math
 import car_model as cm
 import mpc
 from scipy.integrate import odeint
@@ -12,6 +13,7 @@ from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from obstacle_avoidance import obstacle_avoid
 import plot_trajectory
 from utils import environments, get_dist_point_rect
+import vectors
 
 DELTA_TIME = 0.1
 MAX_SPEED = 1.5  # m/s
@@ -163,13 +165,20 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         d_crit = 1.5 * speed**2 / (2*mu*g) + 0.5
         d_safe = 2 * speed**2 / (2*mu*g) + 0.5
         pos = robots[0].state["joint_state"]["position"]
+        vel_x = robots[0].state["joint_state"]["velocity"][0]
+        vel_y = robots[0].state["joint_state"]["velocity"][1]
+        vel = np.array([vel_x, vel_y])
 
-        # Check distances with every robot
+        # Check distances and velocities with every robot
         for i in range(1, len(robots)):
             robot = robots[i]
 
             robot_x = robot.state["joint_state"]["position"][0]
             robot_y = robot.state["joint_state"]["position"][1]
+            robot_x_vel = robot.state["joint_state"]["velocity"][0]
+            robot_y_vel = robot.state["joint_state"]["velocity"][1]
+            robot_vel = np.array([robot_x_vel, robot_y_vel])
+            robot_speed = np.sqrt(robot_x_vel**2 + robot_y_vel**2)
 
             delta_x = robot_x - pos[0]
             delta_y = robot_y - pos[1]
@@ -186,7 +195,17 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
             d_obs[sim_step, i - 1] = d
 
+            # Angles between velocity vectors
+            if speed == 0 or robot_speed ==0:
+                vel_angle = 0
+            else:
+                vel_angle = vectors.angle_between(vel, robot_vel)
+
             if d < d_crit:
+                print('Warning, impending collision')
+                speed = 0
+                steering_angle_delta = 0
+            elif d < d_safe and 0.5*math.pi <= vel_angle <= 1.5*math.pi:
                 print('Warning, impending collision')
                 speed = 0
                 steering_angle_delta = 0
