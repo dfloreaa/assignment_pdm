@@ -1,3 +1,7 @@
+# This is open source code found on Stack Overflow. Reference:
+# Wolever, D. (2016, March 29). Angles between to n-dimensional vectors in Python [Comment on online forum post]. Stack Overflow.
+# Retrieved January 10, 2023, from https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python/13849249#13849249
+
 import numpy as np
 
 def unit_vector(vector):

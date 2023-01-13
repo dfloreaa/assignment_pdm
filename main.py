@@ -2,6 +2,7 @@ import os
 import gym
 from urdfenvs.robots.prius import Prius
 import numpy as np
+import math
 import car_model as cm
 import mpc
 from scipy.integrate import odeint
@@ -168,8 +169,11 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         d_crit = 1.5 * speed**2 / (2*mu*g)
         d_safe = 2 * speed**2 / (2*mu*g) + 0.5
         pos = robots[0].state["joint_state"]["position"]
+        vel_x = robots[0].state["joint_state"]["velocity"][0]
+        vel_y = robots[0].state["joint_state"]["velocity"][1]
+        vel = np.array([vel_x, vel_y])
 
-        # Check distances with every robot
+        # Check distances and velocities with every robot
         for i in range(1, len(robots)):
             robot = robots[i]
 
