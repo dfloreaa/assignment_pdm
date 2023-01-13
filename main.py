@@ -20,12 +20,12 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 500, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 20, render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
     for moving_obs in moving_obstacles:
-        robots.append(MovingObstacle("vel", moving_obs[0], moving_obs[1], moving_obs[2], moving_obs[3], moving_obs[4]))
+        robots.append(MovingObstacle("vel", x_pos = moving_obs[0], y_pos = moving_obs[1], angle = moving_obs[2], vel = moving_obs[3], width = moving_obs[4], duration = moving_obs[5]))
 
     env = gym.make("urdf-env-v0", dt = DELTA_TIME, robots = robots, render = render)
 
@@ -82,6 +82,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     x0[3] = np.radians(-0)  # yaw
 
     x_sim[:, 0] = x0        # Simulation starting conditions
+    d_obs = np.zeros((n_steps, len(robots) - 1)) if len(robots) - 1 > 0 else np.zeros(1)
 
     # Starting guess for input
     action = np.zeros(M)
@@ -160,15 +161,13 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         """"----- OBSTACLE AVOIDANCE -----"""
         # Breaking distance
         d_crit = 1.5 * speed**2 / (2*mu*g) + 0.5
-        d_safe = 2 * speed**2 / (2*mu*g)
+        d_safe = 2 * speed**2 / (2*mu*g) + 0.5
         pos = robots[0].state["joint_state"]["position"]
 
-        # Vehicle dimensions for collision on each axis
-        x_size = abs(vehicle_width / 2 * np.sin(pos[2])) + abs(vehicle_length / 2 * np.cos(pos[2]))
-        y_size = abs(vehicle_width / 2 * np.cos(pos[2])) + abs(vehicle_length / 2 * np.sin(pos[2]))
-
         # Check distances with every robot
-        for robot in robots[1:]:
+        for i in range(1, len(robots)):
+            robot = robots[i]
+
             robot_x = robot.state["joint_state"]["position"][0]
             robot_y = robot.state["joint_state"]["position"][1]
 
@@ -185,17 +184,22 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
             d = get_dist_point_rect(delta_x, delta_y, x_min, y_min, x_max, y_max)
             d -= robot.width
 
+            d_obs[sim_step, i - 1] = d
+
             if d < d_crit:
                 print('Warning, impending collision')
                 speed = 0
                 steering_angle_delta = 0
 
-        """"CHANGE ME PLS"""
-        # PLEASE CHANGE, TEMP VARIABLE FOR THE MOVING OBSTACLE
-        second_speed = 1.1 if int(sim_step/25) % 2 else -1.1
+        # Compute the speeds for each robot
+        speeds = [speed, steering_angle_delta]
+        for robot in robots[1:]:
+            obstacle_speed = robot.vel if int(sim_step/robot.duration) % 2 else -robot.vel
+            speeds.append(obstacle_speed)
+            speeds.append(0.0)
 
         # Execute the optimized action on the agent
-        ob, _, _, _ = env.step([speed, steering_angle_delta, second_speed, 0])
+        ob, _, _, _ = env.step(speeds)
 
         # Update the robot's configuration on the file
         pos = robots[0].state["joint_state"]["position"]
@@ -207,19 +211,26 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
     env.close()
 
-    history2 = []
-    for _ in range(n_steps):
-        ob, reward, done, info = env.step(action)
-        # In observations, information about obstacles is stored in ob['obstacleSensor']
-        history2.append(ob)
+    # history2 = []
+    # for _ in range(n_steps):
+    #     ob, reward, done, info = env.step(action)
+    #     # In observations, information about obstacles is stored in ob['obstacleSensor']
+    #     history2.append(ob)
 
-    env.close()
-
-    # Obstacle avoidance
-    obstacles = False
-    obstacle_avoid(n_steps, history2, obstacles)
+    # # Obstacle avoidance
+    # obstacles = False
+    # obstacle_avoid(n_steps, history2, obstacles)
 
     plot_trajectory.plot(path, environments, environment_id, obstacle_coordinates, obstacles_dimensions, x_sim, u_sim)
+
+    # from matplotlib import pyplot as plt
+    # for i in range(1, len(robots)):
+    #     plt.plot(d_obs[:, i - 1], label = f"MO #{i}")
+    # plt.legend(loc='best')
+    # plt.show()
+
+    while True:
+        continue
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
@@ -230,6 +241,6 @@ if __name__ == "__main__":
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 0.5, 0.5]], render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 1.1, 0.5, 25]], render=True)
 
     #TODO: Add obstacles to performance plot
