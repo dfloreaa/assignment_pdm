@@ -242,5 +242,3 @@ if __name__ == "__main__":
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
     run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 1.1, 0.5, 25]], render=True)
-
-    #TODO: Add obstacles to performance plot
