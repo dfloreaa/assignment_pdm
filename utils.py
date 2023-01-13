@@ -50,6 +50,29 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 
 }
 
+moving_obstacles = [
+    # [x_coord, y_coord, angle, max_speed, duration]
+    [-13, -8, np.pi, 2, 25],
+    [-2, -8, np.pi/2, 2, 15],
+    [-3, 0, 0.0, 2, 40],
+    # [],
+    # [],
+    # [],
+    # [],
+]
+
+def get_obstacle_speed(sim_step, robot):
+    simplify_this = sim_step
+    while simplify_this > robot.duration:
+        simplify_this -= robot.duration
+    if simplify_this < robot.duration//2:
+        obstacle_speed = (robot.vel * simplify_this) / (robot.duration/2)
+    else:
+        obstacle_speed = (robot.vel * (1 - ((simplify_this - robot.duration/2) / (robot.duration/2))))
+
+    obstacle_speed = obstacle_speed if int(sim_step/robot.duration) % 2 else -obstacle_speed
+    return obstacle_speed
+
 def get_dist_point_rect(delta_x, delta_y, x_min, y_min, x_max, y_max):
     """"Compute the distance between a point and the closest point inside the perimeter of the rectangle"""
     d = 0.0

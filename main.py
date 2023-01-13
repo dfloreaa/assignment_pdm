@@ -12,7 +12,7 @@ from moving_obstacle import MovingObstacle
 from urdfenvs.sensors.obstacle_sensor import ObstacleSensor
 from obstacle_avoidance import obstacle_avoid
 import plot_trajectory
-from utils import environments, get_dist_point_rect
+from utils import environments, get_dist_point_rect, moving_obstacles, get_obstacle_speed
 import vectors
 
 DELTA_TIME = 0.1
@@ -22,12 +22,12 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 300, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 350, render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
     for moving_obs in moving_obstacles:
-        robots.append(MovingObstacle("vel", x_pos = moving_obs[0], y_pos = moving_obs[1], angle = moving_obs[2], vel = moving_obs[3], width = moving_obs[4], duration = moving_obs[5]))
+        robots.append(MovingObstacle("vel", x_pos = moving_obs[0], y_pos = moving_obs[1], angle = moving_obs[2], vel = moving_obs[3], duration = moving_obs[4]))
 
     env = gym.make("urdf-env-v0", dt = DELTA_TIME, robots = robots, render = render)
 
@@ -85,6 +85,8 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
     x_sim[:, 0] = x0        # Simulation starting conditions
     d_obs = np.zeros((n_steps, len(robots) - 1)) if len(robots) - 1 > 0 else np.zeros(1)
+    deviation_sim = np.zeros((n_steps, 1))
+
 
     # Starting guess for input
     action = np.zeros(M)
@@ -93,7 +95,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     u_sim[:, 0] = action
 
     # Cost Matrices
-    Q = np.diag([50, 50, 10, 20])   # state error cost
+    Q = np.diag([15, 15, 8, 20])   # state error cost
     R = np.diag([10, 5])           # input cost
 
     controller = mpc.MPC(N, M, Q, R, horizon = 10, dt = DELTA_TIME)
@@ -143,7 +145,9 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         A, B, C = mpc.get_linear_model_matrices(start_state, current_action, controller, L)
 
         # Get Reference_traj -> inputs are in worldframe
-        target, _ = mpc.get_ref_trajectory(x_sim[:, sim_step], path, REF_VEL, controller)
+        target, _, dist = mpc.get_ref_trajectory(x_sim[:, sim_step], path, REF_VEL, controller)
+
+        deviation_sim[sim_step] = dist
 
         x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=10, verbose=False)
 
@@ -162,7 +166,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         """"----- OBSTACLE AVOIDANCE -----"""
         # Breaking distance
-        d_crit = 1.5 * speed**2 / (2*mu*g) + 0.5
+        d_crit = 1.5 * speed**2 / (2*mu*g)
         d_safe = 2 * speed**2 / (2*mu*g) + 0.5
         pos = robots[0].state["joint_state"]["position"]
         vel_x = robots[0].state["joint_state"]["velocity"][0]
@@ -173,47 +177,52 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         for i in range(1, len(robots)):
             robot = robots[i]
 
-            robot_x = robot.state["joint_state"]["position"][0]
-            robot_y = robot.state["joint_state"]["position"][1]
-            robot_x_vel = robot.state["joint_state"]["velocity"][0]
-            robot_y_vel = robot.state["joint_state"]["velocity"][1]
-            robot_vel = np.array([robot_x_vel, robot_y_vel])
-            robot_speed = np.sqrt(robot_x_vel**2 + robot_y_vel**2)
+            prius_vel_raw = robots[0].state['joint_state']['velocity']
+            prius_vel = np.array([prius_vel_raw[0], prius_vel_raw[1]])
 
-            delta_x = robot_x - pos[0]
-            delta_y = robot_y - pos[1]
+            robot_vel_raw = robot.state['joint_state']['velocity']
+            robot_vel = np.array([robot_vel_raw[0], robot_vel_raw[1]])
+            robot_speed = np.sqrt(robot_vel[0]**2 + robot_vel[1]**2)
 
-            x_min = -vehicle_width/2
-            y_min = -vehicle_length/2
+            angle = vectors.angle_between(prius_vel, robot_vel) if robot_speed > 1e-5 else 0
 
-            x_max = vehicle_width/2
-            y_max = vehicle_length/2
+            d = []
 
-            # Get closest distance from point to rectangle
-            d = get_dist_point_rect(delta_x, delta_y, x_min, y_min, x_max, y_max)
-            d -= robot.width
+            for j in range(controller.horizon):
+                robot_x = pos[0] + j * DELTA_TIME * prius_vel[0]
+                robot_y = pos[1] + j * DELTA_TIME * prius_vel[1]
 
-            d_obs[sim_step, i - 1] = d
+                obs_x = robot.state["joint_state"]["position"][0] + j * DELTA_TIME * robot_vel[0]
+                obs_y = robot.state["joint_state"]["position"][1] + j * DELTA_TIME * robot_vel[1]
 
-            # Angles between velocity vectors
-            if speed == 0 or robot_speed ==0:
-                vel_angle = 0
-            else:
-                vel_angle = vectors.angle_between(vel, robot_vel)
+                delta_x = obs_x - robot_x
+                delta_y = obs_y - robot_y
 
-            if d < d_crit:
-                print('Warning, impending collision')
-                speed = 0
-                steering_angle_delta = 0
-            elif d < d_safe and 0.5*math.pi <= vel_angle <= 1.5*math.pi:
-                print('Warning, impending collision')
-                speed = 0
-                steering_angle_delta = 0
+                x_min = -vehicle_width/2
+                y_min = -vehicle_length/2
+
+                x_max = vehicle_width/2
+                y_max = vehicle_length/2
+
+                # Get closest distance from point to rectangle
+                d.append(get_dist_point_rect(delta_x, delta_y, x_min, y_min, x_max, y_max) - robot.width)
+
+                danger_dist_step = d_crit * (controller.horizon - j) / controller.horizon
+
+                if d[j] < danger_dist_step:
+                    print(f"Warning, impending collision in {j} steps")
+                    speed = 0
+                    steering_angle_delta = 0
+                    break
+
+            d_obs[sim_step, i - 1] = d[0]
 
         # Compute the speeds for each robot
         speeds = [speed, steering_angle_delta]
         for robot in robots[1:]:
-            obstacle_speed = robot.vel if int(sim_step/robot.duration) % 2 else -robot.vel
+
+            obstacle_speed = get_obstacle_speed(sim_step, robot)
+            
             speeds.append(obstacle_speed)
             speeds.append(0.0)
 
@@ -230,18 +239,14 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
     env.close()
 
-    # history2 = []
-    # for _ in range(n_steps):
-    #     ob, reward, done, info = env.step(action)
-    #     # In observations, information about obstacles is stored in ob['obstacleSensor']
-    #     history2.append(ob)
-
-    # # Obstacle avoidance
-    # obstacles = False
-    # obstacle_avoid(n_steps, history2, obstacles)
-
     plot_trajectory.plot(path, environments, environment_id, obstacle_coordinates, obstacles_dimensions, x_sim, u_sim)
     plot_trajectory.plot_distance(n_robots = len(robots), dist_obstacles = d_obs)
+    plot_trajectory.plot_deviation(deviation_sim)
+
+    print("\n-----------------------------------------------------\n")
+    print(f"Maximum deviation from the RRT path:", np.max(deviation_sim), "meters")
+    print(f"Average deviation from the RRT path:", np.mean(deviation_sim), "meters")
+    print(f"Standard deviation from the RRT path:", np.std(deviation_sim), "meters")
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
@@ -252,4 +257,4 @@ if __name__ == "__main__":
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 1.1, 0.5, 25]], render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, moving_obstacles, render=True)

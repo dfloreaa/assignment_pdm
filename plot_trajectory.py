@@ -64,3 +64,11 @@ def plot_distance(n_robots, dist_obstacles):
         plt.plot(dist_obstacles[:, i - 1], label = f"MO #{i}")
     plt.legend(loc='best')
     plt.show()
+
+def plot_deviation(deviation_history):
+    plt.figure(figsize=(10, 10))
+    y_zero = np.zeros((deviation_history.shape[0], 1))
+    plt.plot(y_zero, label = "y = 0")
+    plt.plot(deviation_history, label = f"Deviation from the RRT path")
+    plt.legend(loc='best')
+    plt.show()
