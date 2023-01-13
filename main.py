@@ -205,7 +205,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
                 print('Warning, impending collision')
                 speed = 0
                 steering_angle_delta = 0
-            elif d < d_safe and 0.25*math.pi <= vel_angle <= 1.75*math.pi:
+            elif d < d_safe and 0.5*math.pi <= vel_angle <= 1.5*math.pi:
                 print('Warning, impending collision')
                 speed = 0
                 steering_angle_delta = 0
