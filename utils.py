@@ -1,5 +1,7 @@
 import numpy as np
 
+TIME_RATE = 20
+
 environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
                     "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
                     "startpos": (-13, -13),
@@ -55,8 +57,8 @@ moving_obstacles = [
     [-13, -8, np.pi, 2, 25],
     [-2, -8, np.pi/2, 2, 15],
     [-3, 0, 0.0, 2, 40],
-    # [],
-    # [],
+    [-3, 6.5, np.pi, 2, 40],
+    [6, 12, np.pi/2, 2, 20],
     # [],
     # [],
 ]
@@ -65,10 +67,20 @@ def get_obstacle_speed(sim_step, robot):
     simplify_this = sim_step
     while simplify_this > robot.duration:
         simplify_this -= robot.duration
-    if simplify_this < robot.duration//2:
-        obstacle_speed = (robot.vel * simplify_this) / (robot.duration/2)
-    else:
-        obstacle_speed = (robot.vel * (1 - ((simplify_this - robot.duration/2) / (robot.duration/2))))
+
+    if robot.duration//2 > TIME_RATE:
+        if simplify_this < robot.duration//2:
+            obstacle_speed = (robot.vel * simplify_this) / (TIME_RATE)
+        elif simplify_this > robot.duration - TIME_RATE:
+            obstacle_speed = (robot.vel * (1 - ((simplify_this - TIME_RATE) / (TIME_RATE))))
+        else:
+            obstacle_speed = robot.vel
+    
+    else:        
+        if simplify_this < robot.duration//2:
+            obstacle_speed = (robot.vel * simplify_this) / (robot.duration/2)
+        else:
+            obstacle_speed = (robot.vel * (1 - ((simplify_this - robot.duration/2) / (robot.duration/2))))
 
     obstacle_speed = obstacle_speed if int(sim_step/robot.duration) % 2 else -obstacle_speed
     return obstacle_speed
@@ -80,25 +92,40 @@ def get_dist_point_rect(delta_x, delta_y, x_min, y_min, x_max, y_max):
     if (delta_x < x_min):
         if (delta_y <  y_min):
             d = np.hypot(x_min-delta_x, y_min-delta_y)
+            point = (x_min, y_min)
+
         elif (delta_y <= y_max):
             d = x_min - delta_x
+            point = (x_min, delta_y)
+
         else:
             d = np.hypot(x_min-delta_x, y_max-delta_y)
+            point = (x_min, y_max)
 
     elif (delta_x <= x_max):
         if (delta_y <  y_min):
             d = y_min - delta_y
+            point = (delta_x, y_min)
+
         elif (delta_y <= y_max):
             d = 0
+            point = (0, 0)
+
         else:
             d = delta_y - y_max
+            point = (delta_x, y_max)
 
     else:
         if (delta_y <  y_min):
             d = np.hypot(x_max-delta_x, y_min-delta_y)
+            point = (x_max, y_min)
+
         elif (delta_y <= y_max):
             d = delta_x - x_max
+            point = (x_max, delta_y)
+
         else:
             d = np.hypot(x_max-delta_x, y_max-delta_y)
+            point = (x_max, y_max)
     
-    return d
+    return d, point
