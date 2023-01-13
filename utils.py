@@ -54,13 +54,10 @@ environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
 
 moving_obstacles = [
     # [x_coord, y_coord, angle, max_speed, duration]
-    [-13, -8, np.pi, 2, 25],
-    [-2, -8, np.pi/2, 2, 15],
-    [-3, 0, 0.0, 2, 40],
-    [-3, 6.5, np.pi, 2, 40],
-    [6, 12, np.pi/2, 2, 20],
-    # [],
-    # [],
+    [[0, 2, .5*np.pi, 2, 40], [-9.5, 5, np.pi, 2, 40 ], [12, -5, 0, 1, 40]], # Environment 0
+    [], # Environment 1 
+    [], # Environment 2
+    [[-13, -8, np.pi, 2, 25], [-2, -8, np.pi/2, 2, 15], [-3, 0, 0.0, 2, 40], [-3, 6.5, np.pi, 2, 40], [6, 12, np.pi/2, 2, 20]] # Environment 3
 ]
 
 def get_obstacle_speed(sim_step, robot):

@@ -274,4 +274,4 @@ if __name__ == "__main__":
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, moving_obstacles, render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, moving_obstacles[environment_id], render=True)
