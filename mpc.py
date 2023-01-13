@@ -130,6 +130,8 @@ def get_nn_idx(state, path):
     except IndexError as e:
         target_idx = nn_idx
 
+    distance = np.sqrt(np.square(dx) + np.square(dy))[target_idx]
+
     return target_idx
 
 def normalize_angle(angle):
@@ -159,6 +161,8 @@ def get_ref_trajectory(state, path, target_v, mpc):
     ind = get_nn_idx(state, path)
     dx = path[0, ind] - state[0]
     dy = path[1, ind] - state[1]
+
+    distance = np.sqrt(dx**2 + dy**2)
 
     xref[0, 0] = dx * np.cos(-state[3]) - dy * np.sin(-state[3])  # X
     xref[1, 0] = dy * np.cos(-state[3]) + dx * np.sin(-state[3])  # Y
@@ -192,7 +196,7 @@ def get_ref_trajectory(state, path, target_v, mpc):
             xref[3, i] = normalize_angle(path[2, ncourse - 1] - state[3])
             dref[0, i] = 0.0
 
-    return xref, dref
+    return xref, dref, distance
 
 def get_linear_model_matrices(x_bar, u_bar, mpc, L):
     """
