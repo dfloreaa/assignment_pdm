@@ -4,20 +4,17 @@ Copyright (c) 2019 Fanjin Zeng
 This work is licensed under the terms of the MIT license, see <https://opensource.org/licenses/MIT>.  
 '''
 
+import os
+import glob
+import time
+import matplotlib
 import numpy as np
 from random import random
+from collections import deque
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import collections  as mc
-from collections import deque
 import matplotlib.animation as animation
-import matplotlib
-import time
-import os
-import glob
-
-SAFETY_MARGIN = True
-
 class Line():
     ''' Define line '''
     def __init__(self, p0, p1):
@@ -40,137 +37,19 @@ class Obstacle():
         self.height = height
     
     def corners(self, margin=1):
-        if SAFETY_MARGIN:
-            x1 = self.x - self.width/2 - margin/2
-            y1 = self.y - self.height/2 - margin/2
+        x1 = self.x - self.width/2 - margin/2
+        y1 = self.y - self.height/2 - margin/2
 
-            x2 = self.x + self.width/2 + margin/2
-            y2 = self.y - self.height/2 - margin/2
+        x2 = self.x + self.width/2 + margin/2
+        y2 = self.y - self.height/2 - margin/2
 
-            x3 = self.x + self.width/2 + margin/2
-            y3 = self.y + self.height/2 + margin/2
+        x3 = self.x + self.width/2 + margin/2
+        y3 = self.y + self.height/2 + margin/2
 
-            x4 = self.x - self.width/2 - margin/2
-            y4 = self.y + self.height/2 + margin/2
-        else:
-            x1 = self.x - self.width/2
-            y1 = self.y - self.height/2
-
-            x2 = self.x + self.width/2
-            y2 = self.y - self.height/2
-
-            x3 = self.x + self.width/2
-            y3 = self.y + self.height/2
-
-            x4 = self.x - self.width/2
-            y4 = self.y + self.height/2
+        x4 = self.x - self.width/2 - margin/2
+        y4 = self.y + self.height/2 + margin/2
 
         return np.array([(x1, y1), (x2, y2), (x3, y3), (x4, y4)])
-
-def IntersectLine(line1, line2):
-    x1 = line1.p[0]
-    y1 = line1.p[1]
-    x2 = line1.p1[0]
-    y2 = line1.p1[1]
-
-    x3 = line2.p[0]
-    y3 = line2.p[1]
-    x4 = line2.p1[0]
-    y4 = line2.p1[1]
-
-    uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
-    uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
-
-    if (uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
-        return True
-    else:
-        return False
-
-def Intersect(line, obstacle): 
-    ''' Check line-obstacle intersection '''
-    corners = obstacle.corners()
-
-    for i in range(len(corners)):
-        # For every edge of the obstacle, check if the line intersects that edge
-        edge = Line(corners[i], corners[i-1])
-        collision = IntersectLine(line, edge)
-        if collision:
-            break
-    return collision
-
-
-
-
-def distance(x, y):
-    return np.linalg.norm(np.array(x) - np.array(y))
-
-
-def isInObstacle(vex, obstacles, margin=1):
-    for obs in obstacles:
-        nodeX = vex[0]
-        nodeY = vex[1]
-        if SAFETY_MARGIN:
-            if (obs.x - obs.width/2 - margin/2 <= nodeX and nodeX <= obs.x + obs.width/2 + margin/2 and
-            obs.y - obs.height/2 - margin/2 <= nodeY and nodeY <= obs.y + obs.height/2 + margin/2):
-                return True
-        else:
-            if (obs.x - obs.width/2 <= nodeX and nodeX <= obs.x + obs.width/2 and
-            obs.y - obs.height/2 <= nodeY and nodeY <= obs.y + obs.height/2):
-                return True
-    return False
-
-
-def isThruObstacle(line, obstacles):
-    for obstacle in obstacles:
-        if Intersect(line, obstacle):
-            return True
-    return False
-
-
-def nearest(G, vex, obstacles):
-    Nvex = None
-    Nidx = None
-    minDist = float("inf")
-
-    for idx, v in enumerate(G.vertices):
-        line = Line(v, vex)
-        if isThruObstacle(line, obstacles):
-            continue
-
-        dist = distance(v, vex)
-        if dist < minDist:
-            minDist = dist
-            Nidx = idx
-            Nvex = v
-
-    return Nvex, Nidx
-
-
-def newVertex(randvex, nearvex, stepSize):
-    dirn = np.array(randvex) - np.array(nearvex)
-    length = np.linalg.norm(dirn)
-    dirn = (dirn / length) * min (stepSize, length)
-
-    newvex = (nearvex[0]+dirn[0], nearvex[1]+dirn[1])
-    return newvex
-
-
-def window(startpos, endpos):
-    ''' Define seach window - 2 times of start to end rectangle'''
-    width = endpos[0] - startpos[0]
-    height = endpos[1] - startpos[1]
-    winx = startpos[0] - (width / 2.)
-    winy = startpos[1] - (height / 2.)
-    return winx, winy, width, height
-
-def isInWindow(pos, winx, winy, width, height):
-    ''' Restrict new vertex insides search window'''
-    if winx < pos[0] < winx+width and \
-        winy < pos[1] < winy+height:
-        return True
-    else:
-        return False
-
 
 class Graph:
     ''' Define graph '''
@@ -203,7 +82,6 @@ class Graph:
         self.neighbors[idx1].append((idx2, cost))
         self.neighbors[idx2].append((idx1, cost))
 
-
     def randomPosition(self):
         rx = random()
         ry = random()
@@ -212,16 +90,92 @@ class Graph:
         posy = self.startpos[1] - (self.sy / 2.) + ry * self.sy * 2
         return posx, posy
 
+def IntersectLine(line1, line2):
+    """
+    Source used:
+    https://www.jeffreythompson.org/collision-detection/line-line.php
+    """
+    x1 = line1.p[0]
+    y1 = line1.p[1]
+    x2 = line1.p1[0]
+    y2 = line1.p1[1]
+
+    x3 = line2.p[0]
+    y3 = line2.p[1]
+    x4 = line2.p1[0]
+    y4 = line2.p1[1]
+
+    uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+    uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+
+    if (uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
+        return True
+    else:
+        return False
+
+def Intersect(line, obstacle): 
+    ''' Check line-obstacle intersection '''
+    corners = obstacle.corners()
+
+    for i in range(len(corners)):
+        # For every edge of the obstacle, check if the line intersects that edge
+        edge = Line(corners[i], corners[i-1])
+        collision = IntersectLine(line, edge)
+        if collision:
+            break
+    return collision
+
+def distance(x, y):
+    return np.linalg.norm(np.array(x) - np.array(y))
+
+def isInObstacle(vex, obstacles, margin=1):
+    for obs in obstacles:
+        nodeX = vex[0]
+        nodeY = vex[1]
+        if (obs.x - obs.width/2 - margin/2 <= nodeX and nodeX <= obs.x + obs.width/2 + margin/2 and
+            obs.y - obs.height/2 - margin/2 <= nodeY and nodeY <= obs.y + obs.height/2 + margin/2):
+                return True
+
+    return False
+
+def isThruObstacle(line, obstacles):
+    for obstacle in obstacles:
+        if Intersect(line, obstacle):
+            return True
+    return False
+
+def nearest(G, vex, obstacles):
+    Nvex = None
+    Nidx = None
+    minDist = float("inf")
+
+    for idx, v in enumerate(G.vertices):
+        line = Line(v, vex)
+        if isThruObstacle(line, obstacles):
+            continue
+
+        dist = distance(v, vex)
+        if dist < minDist:
+            minDist = dist
+            Nidx = idx
+            Nvex = v
+
+    return Nvex, Nidx
+
+def newVertex(randvex, nearvex, stepSize):
+    dirn = np.array(randvex) - np.array(nearvex)
+    length = np.linalg.norm(dirn)
+    dirn = (dirn / length) * min (stepSize, length)
+
+    newvex = (nearvex[0]+dirn[0], nearvex[1]+dirn[1])
+    return newvex
 
 def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_animation=False):
     ''' RRT star algorithm '''
-    fig = plt.figure()
     G = Graph(startpos, endpos)
-    n_succes = np.inf
-    n_ims = 0
 
     for i in range(n_iter):
-        if G.success == True and i >n_succes:
+        if G.success == True:
             if make_animation:
                 intermediatePlot(G, obstacles, i/50+1)
             break
@@ -271,7 +225,6 @@ def RRT_star(startpos, endpos, obstacles, n_iter, stepSize, radius = 1, make_ani
             except:
                 G.distances[endidx] = G.distances[newidx]+dist
             if G.success == False:
-                n_succes = i
                 print("Success at ", i)
             G.success = True
             
@@ -309,7 +262,7 @@ def dijkstra(G):
         path.appendleft(G.vertices[curNode])
         curNode = prev[curNode]
     path.appendleft(G.vertices[curNode])
-    print(path)
+
     return list(path)
 
 def plot(G, obstacles, environment_id, path=None):
@@ -342,7 +295,7 @@ def plot(G, obstacles, environment_id, path=None):
     plt.savefig('graph{}.png'.format(environment_id))
 
 def intermediatePlot(G, obstacles, i):
-    if not os.path.exists("./pintermediate"):
+    if not os.path.exists("./intermediate"):
         os.makedirs("./intermediate")
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
@@ -364,15 +317,6 @@ def intermediatePlot(G, obstacles, i):
     plt.savefig('intermediate/intermediate{}.png'.format(int(i)))
     plt.close()
 
-
-
-def pathSearch(startpos, endpos, obstacles, n_iter, radius, stepSize):
-    G = RRT_star(startpos, endpos, obstacles, n_iter, radius, stepSize)
-    if G.success:
-        path = dijkstra(G)
-        plot(G, obstacles, path)
-        return path
-
 def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     '''
     obstacle_coordinates = x, y, orientation
@@ -384,28 +328,25 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     height = obstacle_dimensions[1]
     return Obstacle(x, y, width, height)
 
-
 def makeAnimation(environment_id):
     _, _, files = next(os.walk("./intermediate/"))
     file_count = len(files)
+
     fig = plt.figure(figsize=(8,8))
     ax = plt.gca()
     plt.axis('off')
     #initialization of animation, plot array of zeros 
     def init():
         imobj.set_data(np.zeros((100, 100)))
-
         return  imobj,
 
     def animate(i):
         ## Read in picture
         fname = "./intermediate/intermediate%0d.png" % i 
-
         img = matplotlib.image.imread(fname)[-1::-1]
         imobj.set_data(img)
 
         return  imobj,
-
 
     ## create an AxesImage object
     imobj = ax.imshow(np.zeros((100, 100)), origin='lower', alpha=1.0, zorder=1, aspect=1 )
@@ -414,8 +355,6 @@ def makeAnimation(environment_id):
     f = r"./animation{}.gif".format(environment_id) 
     writergif = matplotlib.animation.FFMpegWriter(fps=8) 
     anim.save(f, writer=writergif)
-
-    plt.show()
 
 def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
                     startpos, endpos, n_iter, make_animation = False):
@@ -429,9 +368,7 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
     for i in range(len(obstacles_coordinates)):
         obstacles.append(gymObstacleToPlot(obstacles_coordinates[i], obstacles_dimensions[i]))
 
-
     stepSize = 0.7
-
     radius = 1 # New nodes will be accepted if they are inside this radius of a neighbouring node
     
     if make_animation:
@@ -446,7 +383,6 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
     if make_animation:
         makeAnimation( environment_id)
     
-
     print("Time spent creating graph: {}".format(t1-t0))
     if G.success:
         path = dijkstra(G)

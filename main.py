@@ -221,6 +221,103 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
     plot_trajectory.plot(path, environments, environment_id, obstacle_coordinates, obstacles_dimensions, x_sim, u_sim)
 
+    plt.figure(figsize=(12, 80))
+
+    plt.subplot(grid[0:4, 0:4])
+    ax = plt.gca()
+    circle = patches.Circle(environments[environment_id]['startpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    circle = patches.Circle(environments[environment_id]['endpos'], radius=0.25, color='black')
+    ax.add_artist(circle)
+    for i in range(len(obstacles_coordinates)):
+        obstacle = Obstacle(obstacles_coordinates[i][0], obstacles_coordinates[i][1],
+                            obstacles_dimensions[i][0], obstacles_dimensions[i][1])
+        rect = patches.Rectangle((obstacle.x-obstacle.width/2, obstacle.y - obstacle.height/2), obstacle.width, obstacle.height, color='black')
+        ax.add_artist(rect)
+    plt.plot(path[0, :], path[1, :], "b+")
+    plt.plot(x_sim[0, :], x_sim[1, :], color = "red")
+    plt.axis("equal")
+    plt.ylabel("y")
+    plt.xlabel("x")
+    plt.axis([-15, 15, -15, 15])
+
+    plt.subplot(grid[0, 4])
+    plt.plot(u_sim[0, :])
+    plt.ylabel("a(t) [m/ss]")
+
+    plt.subplot(grid[1, 4])
+    plt.plot(x_sim[2, :])
+    plt.ylabel("v(t) [m/s]")
+
+    plt.subplot(grid[2, 4])
+    plt.plot(np.degrees(u_sim[1, :]))
+    plt.ylabel("delta(t) [rad]")
+
+    plt.subplot(grid[3, 4])
+    plt.plot(x_sim[3, :])
+    plt.ylabel("theta(t) [rad]")
+
+    plt.tight_layout()
+    
+    # save the plot
+    if not os.path.exists("./performance"):
+        os.makedirs("./performance")
+
+    plt.savefig('./performance/performance{}.png'.format(environment_id))
+
+    return history
+
+
+environments = {0: {"obstacle_coordinates": [[-5, -5, 0], [5, 5, 0]],
+                    "obstacle_dimensions": [[20, 1, 1], [20, 1, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13),
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
+                1: {"obstacle_coordinates": [[-7.5, -11, 0], [7.5, 0, 0], [6 , 10, 0], [0, -2., 0], [-7.5, -2.5, 0]],
+                    "obstacle_dimensions": [[15, 0.5, 1], [15, 0.5, 1], [18, 0.5, 1], [0.5, 4, 1], [5, 2.5, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13), 
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
+                2: {"obstacle_coordinates":[[-11.25, 11.25, 0], [-3.75, 11.25, 0], [3.75, 11.25, 0], [11.25, 11.25, 0],
+                                            [-11.25, 3.75, 0], [-3.75, 3.75, 0], [3.75, 3.75, 0], [11.25, 3.75, 0],
+                                            [-11.25, -3.75, 0], [-3.75, -3.75, 0], [3.75, -3.75, 0], [11.25, -3.75, 0],
+                                            [-11.25, -11.25, 0], [-3.75, -11.25, 0], [3.75, -11.25, 0], [11.25, -11.25, 0]],
+                    "obstacle_dimensions": [[1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1],
+                                            [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1], [1.5, 1.5, 1]],
+                    "startpos": (-11.25, -13.5),
+                    "endpos": (11.25, 13.5), 
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
+                3:  {"obstacle_coordinates":[[-12, -11, 0], [-7, -7, 0], [3, -11, 0], [12, -13, 0], [-11, -3, 0], [10, -5, 0],
+                                            [1, -1, 0], [-7, 3, 0], [6, 7, 0], [-6, 9, 0],
+                                            [-5, -11, 0], [1, -13, 0], [9, -11, 0], [-11, 0, 0], [-1, -3, 0], [3, 3, 0], [-7, 12, 0],
+                                            [9, 1, 0], [6, 14, 0]],
+                    "obstacle_dimensions": [[6, .5, 1], [4, .5, 1], [4, .5, 1], [6, .5, 1], [8, .5, 1], [10, .5, 1],
+                                            [4, .5, 1], [8, .5, 1], [6, .5, 1], [10, .5, 1],
+                                            [.5, 8, 1], [.5, 4, 1], [.5, 4, 1], [.5, 6, 1], [.5, 4, 1], [.5, 8, 1], [.5, 6, 1],
+                                            [4, 4, 1], [6, 2, 1]],
+                    "startpos": (-13, -13),
+                    "endpos": (13, 13),
+                    "boundary_coordinates": [[0, -15, 0], [-15, 0, 0],
+                                            [15, 0, 0], [0, 15, 0]],
+                    "boundary_dimensions": [[30, 0.5, 1], [0.5, 30, 1], 
+                                             [0.5, 30, 1], [30, 0.5, 1] ]},
+
+}
+
 if __name__ == "__main__":
     MAKE_ANIMATION = False
     environment_id = 3
@@ -231,5 +328,3 @@ if __name__ == "__main__":
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
 
     run_env(obstacle_coordinates, obstacle_dimensions, environment_id, [[-13, -8, np.pi, 0.5, 0.5]], render=True)
-
-    #TODO: Add obstacles to performance plot
