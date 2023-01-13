@@ -292,11 +292,15 @@ def plot(G, obstacles, environment_id, path=None):
 
     plt.axis([-15, 15, -15, 15])
     ax.margins(0.1)
+
     plt.savefig('graph{}.png'.format(environment_id))
 
 def intermediatePlot(G, obstacles, i):
-    if not os.path.exists("./intermediate"):
-        os.makedirs("./intermediate")
+    file_folder = os.path.dirname(os.path.realpath(__file__))
+    path_directory = f"{file_folder}/intermediate"
+    if not os.path.exists(path_directory):
+        os.makedirs(path_directory)
+
     px = [x for x, y in G.vertices]
     py = [y for x, y in G.vertices]
     fig, ax = plt.subplots(figsize=(6,6))
@@ -314,7 +318,7 @@ def intermediatePlot(G, obstacles, i):
 
     plt.axis([-15, 15, -15, 15])
     ax.margins(0.1)
-    plt.savefig('intermediate/intermediate{}.png'.format(int(i)))
+    plt.savefig(f"{file_folder}/intermediate/intermediate{int(i)}.png")
     plt.close()
 
 def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
@@ -329,7 +333,9 @@ def gymObstacleToPlot(obstacle_coordinates, obstacle_dimensions):
     return Obstacle(x, y, width, height)
 
 def makeAnimation(environment_id):
-    _, _, files = next(os.walk("./intermediate/"))
+    file_folder = os.path.dirname(os.path.realpath(__file__))
+    path_directory = f"{file_folder}/intermediate"
+    _, _, files = next(os.walk(path_directory))
     file_count = len(files)
 
     fig = plt.figure(figsize=(8,8))
@@ -342,7 +348,9 @@ def makeAnimation(environment_id):
 
     def animate(i):
         ## Read in picture
-        fname = "./intermediate/intermediate%0d.png" % i 
+        file_folder = os.path.dirname(os.path.realpath(__file__))
+        fname = f"{file_folder}/intermediate/intermediate{i}.png"
+        #fname = "./intermediate/intermediate%0d.png" % i 
         img = matplotlib.image.imread(fname)[-1::-1]
         imobj.set_data(img)
 
@@ -372,7 +380,9 @@ def pathComputation(obstacles_coordinates, obstacles_dimensions, environment_id,
     radius = 1 # New nodes will be accepted if they are inside this radius of a neighbouring node
     
     if make_animation:
-        files = glob.glob('./intermediate/*')
+        file_folder = os.path.dirname(os.path.realpath(__file__))
+        path_directory = f"{file_folder}/intermediate/*"
+        files = glob.glob(path_directory)
         for f in files:
             os.remove(f)
 

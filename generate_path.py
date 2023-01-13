@@ -21,15 +21,17 @@ def generatePath(environment_dict, environment_id, n_iter = 20000, make_animatio
         print("No path found for the current map")
         path = []
 
-    if dir is None:
-        # save the path
-        if not os.path.exists("./paths"):
-            os.makedirs("./paths")
+    # save the path
+    if directory is None:
+        file_folder = os.path.dirname(os.path.realpath(__file__))
+        path_directory = f"{file_folder}/paths"
+        if not os.path.exists(path_directory):
+            os.makedirs(path_directory)
         
-        np.save("./paths/path{}.npy".format(environment_id), np.array(path))
+        np.save(f"{file_folder}/paths/path{environment_id}.npy", np.array(path))
         print(path)
 
     else:
-        np.save(dir, np.array(path))
+        np.save(directory, np.array(path))
 
     return path
