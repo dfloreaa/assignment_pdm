@@ -4,7 +4,7 @@ from RRT import pathComputation
 
 
 # Environment consists of obstacles coordinates and dimensions
-def generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = False):
+def generatePath(environment_dict, environment_id, n_iter = 20000, make_animation = False, directory = None):
     print("Generating path for environment: ", environment_id)
 
     obstacle_coordinates = environment_dict["obstacle_coordinates"] + environment_dict["boundary_coordinates"]
@@ -17,9 +17,19 @@ def generatePath(environment_dict, environment_id, n_iter = 20000, make_animatio
     path = pathComputation(obstacle_coordinates, obstacle_dimensions, environment_id, 
                             startpos, endpos, n_iter, make_animation= make_animation)
 
-    # save the path
-    if not os.path.exists("./paths"):
-        os.makedirs("./paths")
-    
-    np.save("./paths/path{}.npy".format(environment_id), np.array(path))
-    print(path)
+    if path is None:
+        print("No path found for the current map")
+        path = []
+
+    if dir is None:
+        # save the path
+        if not os.path.exists("./paths"):
+            os.makedirs("./paths")
+        
+        np.save("./paths/path{}.npy".format(environment_id), np.array(path))
+        print(path)
+
+    else:
+        np.save(dir, np.array(path))
+
+    return path
