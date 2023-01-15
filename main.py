@@ -15,14 +15,14 @@ import plot_trajectory
 from utils import environments, get_dist_point_rect, moving_obstacles, get_obstacle_speed
 import vectors
 
-DELTA_TIME = 0.1
+DELTA_TIME = 0.05
 MAX_SPEED = 1.5  # m/s
 MAX_ACC = 1.0  # m/ss
 MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 350, boundary = [15, 15], render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 700, boundary = [15, 15], render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
@@ -149,7 +149,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         deviation_sim[sim_step] = dist
 
-        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, boundary = robots[1:], time_horizon=10, verbose=False)
+        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, boundary = boundary, time_horizon=10, verbose=False)
 
         # Retrieve optimized U and assign to u_bar to linearize in next step
         u_bar = np.vstack((np.array(u_mpc.value[0, :]).flatten(), (np.array(u_mpc.value[1, :]).flatten())))
