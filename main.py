@@ -22,7 +22,7 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 400, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 500, render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
@@ -267,7 +267,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
-    environment_id = 3
+    environment_id = 1
     
     environment_dict = environments[environment_id]
 
