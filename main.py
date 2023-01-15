@@ -95,8 +95,8 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     u_sim[:, 0] = action
 
     # Cost Matrices
-    Q = np.diag([15, 15, 8, 10])   # state error cost
-    R = np.diag([10, 1])           # input cost
+    Q = np.diag([15, 15, 8, 20])   # state error cost
+    R = np.diag([10, 5])           # input cost
 
     controller = mpc.MPC(N, M, Q, R, horizon = 10, dt = DELTA_TIME)
 
