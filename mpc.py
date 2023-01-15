@@ -20,7 +20,7 @@ class MPC():
         self.horizon = horizon      # Time Horizon for the prediction
         self.dt = dt                # Discretization Step
 
-    def optimize_linearized_model(self, A, B, C, state, target, boundary, time_horizon=10, verbose=False):
+    def optimize_linearized_model(self, A, B, C, state, target, boundary, time_horizon = 10, verbose=False):
 
         # Create variables
         x = opt.Variable((self.N, time_horizon + 1), name="states")
