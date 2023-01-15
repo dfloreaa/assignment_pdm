@@ -60,16 +60,18 @@ moving_obstacles = [
     [[-13, -8, np.pi, 2, 25], [-2, -8, np.pi/2, 2, 15], [-3, 0, 0.0, 2, 40], [-3, 6.5, np.pi, 2, 40], [6, 12, np.pi/2, 2, 20]] # Environment 3
 ]
 
-def get_obstacle_speed(sim_step, robot):
+def get_obstacle_speed(sim_step, robot, delta):
+    rate = TIME_RATE / (10 * delta)
+
     simplify_this = sim_step
     while simplify_this > robot.duration:
         simplify_this -= robot.duration
 
-    if robot.duration//2 > TIME_RATE:
+    if robot.duration//2 > rate:
         if simplify_this < robot.duration//2:
-            obstacle_speed = (robot.vel * simplify_this) / (TIME_RATE)
-        elif simplify_this > robot.duration - TIME_RATE:
-            obstacle_speed = (robot.vel * (1 - ((simplify_this - TIME_RATE) / (TIME_RATE))))
+            obstacle_speed = (robot.vel * simplify_this) / (rate)
+        elif simplify_this > robot.duration - rate:
+            obstacle_speed = (robot.vel * (1 - ((simplify_this - rate) / (rate))))
         else:
             obstacle_speed = robot.vel
     

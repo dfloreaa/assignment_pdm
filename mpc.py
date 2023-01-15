@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 MAX_SPEED = 1.5  # m/s
 MAX_ACC = 1.0  # m/ss
 MAX_D_ACC = 1.0  # m/sss
-MAX_STEER = np.radians(45)  # rad
+MAX_STEER = np.radians(40)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
 class MPC():

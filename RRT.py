@@ -128,7 +128,7 @@ def Intersect(line, obstacle):
 def distance(x, y):
     return np.linalg.norm(np.array(x) - np.array(y))
 
-def isInObstacle(vex, obstacles, margin=1):
+def isInObstacle(vex, obstacles, margin=1.5):
     for obs in obstacles:
         nodeX = vex[0]
         nodeY = vex[1]

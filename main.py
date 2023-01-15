@@ -22,7 +22,7 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 400, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = int(40/DELTA_TIME), render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
@@ -95,10 +95,10 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     u_sim[:, 0] = action
 
     # Cost Matrices
-    Q = np.diag([15, 15, 8, 20])   # state error cost
+    Q = np.diag([20, 20, 8, 20])   # state error cost
     R = np.diag([10, 5])           # input cost
 
-    controller = mpc.MPC(N, M, Q, R, horizon = 10, dt = DELTA_TIME)
+    controller = mpc.MPC(N, M, Q, R, horizon = int(1/DELTA_TIME), dt = DELTA_TIME)
 
 
     """----- INITIALIZE ROBOTS -----"""
@@ -149,7 +149,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         deviation_sim[sim_step] = dist
 
-        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=10, verbose=False)
+        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=int(1/DELTA_TIME), verbose=False)
 
         # Retrieve optimized U and assign to u_bar to linearize in next step
         u_bar = np.vstack((np.array(u_mpc.value[0, :]).flatten(), (np.array(u_mpc.value[1, :]).flatten())))
@@ -203,8 +203,8 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
                     robot_y = pos[1] + x_mpc.value[1][j]
 
                 if j > 0:
-                    obs_x += DELTA_TIME * get_obstacle_speed(sim_step + j, robot) * np.cos(robot.state["joint_state"]["position"][2])
-                    obs_y += DELTA_TIME * get_obstacle_speed(sim_step + j, robot) * np.sin(robot.state["joint_state"]["position"][2])
+                    obs_x += DELTA_TIME * get_obstacle_speed(sim_step + j, robot, DELTA_TIME) * np.cos(robot.state["joint_state"]["position"][2])
+                    obs_y += DELTA_TIME * get_obstacle_speed(sim_step + j, robot, DELTA_TIME) * np.sin(robot.state["joint_state"]["position"][2])
 
                 delta_x = obs_x - robot_x
                 delta_y = obs_y - robot_y
@@ -238,7 +238,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         # Compute the speeds for each robot
         speeds = [speed, steering_angle_delta]
         for robot in robots[1:]:
-            obstacle_speed = get_obstacle_speed(sim_step, robot)
+            obstacle_speed = get_obstacle_speed(sim_step, robot, DELTA_TIME)
             speeds.append(obstacle_speed)
             speeds.append(0.0)
 
