@@ -267,7 +267,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
-    environment_id = 3
+    environment_id = 1
     
     environment_dict = environments[environment_id]
 
