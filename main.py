@@ -95,10 +95,10 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     u_sim[:, 0] = action
 
     # Cost Matrices
-    Q = np.diag([30, 30, 8, 25])   # state error cost
-    R = np.diag([10, 2])           # input cost
+    Q = np.diag([15, 15, 8, 20])   # state error cost
+    R = np.diag([10, 5])           # input cost
 
-    controller = mpc.MPC(N, M, Q, R, horizon = int(1/DELTA_TIME), dt = DELTA_TIME)
+    controller = mpc.MPC(N, M, Q, R, horizon = 10, dt = DELTA_TIME)
 
 
     """----- INITIALIZE ROBOTS -----"""
@@ -203,8 +203,8 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
                     robot_y = pos[1] + x_mpc.value[1][j]
 
                 if j > 0:
-                    obs_x += DELTA_TIME * get_obstacle_speed(sim_step + j, robot, DELTA_TIME) * np.cos(robot.state["joint_state"]["position"][2])
-                    obs_y += DELTA_TIME * get_obstacle_speed(sim_step + j, robot, DELTA_TIME) * np.sin(robot.state["joint_state"]["position"][2])
+                    obs_x += DELTA_TIME * get_obstacle_speed(sim_step + j, robot) * np.cos(robot.state["joint_state"]["position"][2])
+                    obs_y += DELTA_TIME * get_obstacle_speed(sim_step + j, robot) * np.sin(robot.state["joint_state"]["position"][2])
 
                 delta_x = obs_x - robot_x
                 delta_y = obs_y - robot_y
@@ -238,7 +238,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         # Compute the speeds for each robot
         speeds = [speed, steering_angle_delta]
         for robot in robots[1:]:
-            obstacle_speed = get_obstacle_speed(sim_step, robot, DELTA_TIME)
+            obstacle_speed = get_obstacle_speed(sim_step, robot)
             speeds.append(obstacle_speed)
             speeds.append(0.0)
 
