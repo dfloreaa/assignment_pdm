@@ -22,7 +22,7 @@ MAX_D_ACC = 1.0  # m/sss
 MAX_STEER = np.radians(30)  # rad
 MAX_D_STEER = np.radians(30)  # rad/s
 
-def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 350, render=False, goal=True, obstacles=True):
+def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_obstacles, n_steps = 350, boundary = [15, 15], render=False, goal=True, obstacles=True):
 
     # Generate each robot
     robots = [Prius(mode="vel")]
@@ -149,7 +149,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         deviation_sim[sim_step] = dist
 
-        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=10, verbose=False)
+        x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, boundary = robots[1:], time_horizon=10, verbose=False)
 
         # Retrieve optimized U and assign to u_bar to linearize in next step
         u_bar = np.vstack((np.array(u_mpc.value[0, :]).flatten(), (np.array(u_mpc.value[1, :]).flatten())))
@@ -273,5 +273,6 @@ if __name__ == "__main__":
 
     obstacle_coordinates = environments[environment_id]["obstacle_coordinates"] + environments[environment_id]["boundary_coordinates"]
     obstacle_dimensions = environments[environment_id]["obstacle_dimensions"] + environments[environment_id]["boundary_dimensions"]
+    boundary = [abs(environment_dict["boundary_coordinates"][1][0]), abs(environment_dict["boundary_coordinates"][0][1])]
 
-    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, moving_obstacles[environment_id], render=True)
+    run_env(obstacle_coordinates, obstacle_dimensions, environment_id, moving_obstacles[environment_id], boundary = boundary, render = True)
