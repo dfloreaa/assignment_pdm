@@ -2,5 +2,6 @@ intermediate/
 performance/
 animation/
 graph/
+__pycache__/
 
 edit_path.py

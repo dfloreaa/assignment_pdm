@@ -28,15 +28,15 @@ These three files can be found in the following directories, respectively:
 with # being the environment ID.
 
 ## Environments
-The following environments have been defined for the Prius. These can be selected in the main file by chanign `enviornment_id` to one of the following values `{0, 1, 2, 3}`. 
+The following environments have been defined for the Prius. These can be selected in the main file by changing `enviornment_id` to one of the following values `{0, 1, 2, 3}`. 
 <table>
  <tr>
   <td> Environment 0 </td>
   <td> Environment 1 </td>
  </tr>
  <tr>
-  <td> <img src = Environment0.png width="250" height="250"/> </td>
-  <td> <img src = Environment1.png width="250" height="250"/> </td>  
+  <td> <img src = images/Environment0.png width="250" height="250"/> </td>
+  <td> <img src = images/Environment1.png width="250" height="250"/> </td>  
 
 </table>
 
@@ -46,7 +46,7 @@ The following environments have been defined for the Prius. These can be selecte
   <td> Environment 3 </td>
  </tr>
  <tr>
-  <td> <img src = Environment2.png width="250" height="250"/> </td>
-  <td> <img src=Environment3.png width="250" height="250"/> </td>
+  <td> <img src = images/Environment2.png width="250" height="250"/> </td>
+  <td> <img src=images/Environment3.png width="250" height="250"/> </td>
  </tr>
 </table>
