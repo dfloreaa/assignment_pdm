@@ -2,7 +2,6 @@ import os
 import gym
 from urdfenvs.robots.prius import Prius
 import numpy as np
-import math
 import car_model as cm
 import mpc
 from scipy.integrate import odeint
