@@ -15,28 +15,28 @@ In addition the following packages need to be installed:
 - matplotlib
 
 ## Installation and usage
-Unzip the file. Next run the main file. Note that in the main file, it is possible to select an environment.
-On first run of every environment, the algorithm will first create a path for that specific environment; this will take some time. Every following run of that environment will use the same path again.
+Clone the repo. Next run the main.py file. Note that in the main file, it is possible to select an environment by changing the `environment_id`.
+On first run of every environment, the algorithm will first create a path for that specific environment; this will take some time. Every following run of that environment will use the same path again. In the case that you want to create an animation of the RRT* algorithm, change the global variable `MAKE_ANIMATION` to true. If you want to create a new path, delete the created path under `paths/path#.npy` with # being the environment ID.
 
 ## Output
-After running the main file, 3 important files will be created. Firstly, an animation will be created, showing the exploration of the workspace using RRT. Next, an image will be created, showing the shortest path that will be used for the MPC algorithm. Lastly, the performance can be evaluated in the performance plot, showing the actual path of prius alongside the optimal path, and other important metrics.
+After running the main file, 3 important files will be created. Firstly, an animation will be created (if specified), showing the exploration of the workspace using RRT*. Next, an image will be created, showing the shortest path that will be used for the MPC algorithm. Lastly, the performance can be evaluated in the performance plot, showing the actual path of prius alongside the optimal path, and other important metrics.
 These three files can be found in the following directories, respectively:
-- `animation/animation#`
-- `graph/graph#`
-- `performance/performance#`
+- `animation/animation.gif#`
+- `graph/graph.png#`
+- `performance/performance.png#`
 
 with # being the environment ID.
 
 ## Environments
-The following environments have been defined for the Prius. These can be selected in the main file by chanign `enviornment_id` to one of the following values `{0, 1, 2, 3}`. 
+The following environments have been defined for the Prius. These can be selected in the main file by changing `enviornment_id` to one of the following values `{0, 1, 2, 3}`. 
 <table>
  <tr>
   <td> Environment 0 </td>
   <td> Environment 1 </td>
  </tr>
  <tr>
-  <td> <img src = Environment0.png width="250" height="250"/> </td>
-  <td> <img src = Environment1.png width="250" height="250"/> </td>  
+  <td> <img src = images/Environment0.png width="250" height="250"/> </td>
+  <td> <img src = images/Environment1.png width="250" height="250"/> </td>  
 
 </table>
 
@@ -46,7 +46,7 @@ The following environments have been defined for the Prius. These can be selecte
   <td> Environment 3 </td>
  </tr>
  <tr>
-  <td> <img src = Environment2.png width="250" height="250"/> </td>
-  <td> <img src=Environment3.png width="250" height="250"/> </td>
+  <td> <img src = images/Environment2.png width="250" height="250"/> </td>
+  <td> <img src=images/Environment3.png width="250" height="250"/> </td>
  </tr>
 </table>
