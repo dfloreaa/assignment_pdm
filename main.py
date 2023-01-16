@@ -147,7 +147,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
         # Get Reference_traj -> inputs are in worldframe
         target, _, dist = mpc.get_ref_trajectory(x_sim[:, sim_step], path, REF_VEL, controller)
 
-        deviation_sim[sim_step] = dist
+        #deviation_sim[sim_step] = dist
 
         x_mpc, u_mpc = controller.optimize_linearized_model(A, B, C, start_state, target, moving_obstacles = robots[1:], time_horizon=int(1/DELTA_TIME), verbose=False)
 
@@ -166,12 +166,12 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
         """"----- OBSTACLE AVOIDANCE -----"""
         # Breaking distance
-        d_crit = 1.5 * speed**2 / (2*mu*g) + 0.5
-        d_safe = 2 * speed**2 / (2*mu*g) + 0.5
+        d_crit = 1.5*speed**2 / (2*mu*g) + 0.5
+        # d_safe = 2 * speed**2 / (2*mu*g) + 0.5
         pos = robots[0].state["joint_state"]["position"]
-        vel_x = robots[0].state["joint_state"]["velocity"][0]
-        vel_y = robots[0].state["joint_state"]["velocity"][1]
-        vel = np.array([vel_x, vel_y])
+        # vel_x = robots[0].state["joint_state"]["velocity"][0]
+        # vel_y = robots[0].state["joint_state"]["velocity"][1]
+        # vel = np.array([vel_x, vel_y])
 
         dl_id = [p.addUserDebugLine([0, 0, 0], [0, 0, 0.33], [0, 0, 1]) for i in range(1, len(robots))]
 
@@ -182,11 +182,11 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
             prius_vel_raw = robots[0].state['joint_state']['velocity']
             prius_vel = np.array([prius_vel_raw[0], prius_vel_raw[1]])
 
-            robot_vel_raw = robot.state['joint_state']['velocity']
-            robot_vel = np.array([robot_vel_raw[0], robot_vel_raw[1]])
-            robot_speed = np.sqrt(robot_vel[0]**2 + robot_vel[1]**2)
+            # robot_vel_raw = robot.state['joint_state']['velocity']
+            # robot_vel = np.array([robot_vel_raw[0], robot_vel_raw[1]])
+            # robot_speed = np.sqrt(robot_vel[0]**2 + robot_vel[1]**2)
 
-            angle = vectors.angle_between(prius_vel, robot_vel) if robot_speed > 1e-5 else 0
+            # angle = vectors.angle_between(prius_vel, robot_vel) if robot_speed > 1e-5 and speed > 1e-5 else 0
 
             d = []
 
@@ -227,7 +227,7 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
 
                 # danger_dist_step = d_crit * (controller.horizon) / controller.horizon
 
-                if d[j] < d_crit:
+                if d[j] < d_crit: #and 0.5*np.pi <= angle <= 1.5*np.pi:
                     print(f"Warning, impending collision in {j} steps")
                     speed = 0
                     steering_angle_delta = 0
@@ -260,14 +260,14 @@ def run_env(obstacles_coordinates, obstacles_dimensions, environment_id, moving_
     plot_trajectory.plot_deviation(deviation_sim)
 
     print("\n-----------------------------------------------------\n")
-    print(f"Maximum deviation from the RRT path:", np.max(deviation_sim), "meters")
-    print(f"Average deviation from the RRT path:", np.mean(deviation_sim), "meters")
-    print(f"Standard deviation from the RRT path:", np.std(deviation_sim), "meters")
+    print(f"Average deviation from the RRT* path:", np.mean(deviation_sim), "meters")
+    print(f"Standard deviation from the RRT* path:", np.std(deviation_sim), "meters")
+    print(f"Maximum deviation from the RRT* path:", np.max(deviation_sim), "meters")
     print("\n-----------------------------------------------------\n")
 
 if __name__ == "__main__":
     MAKE_ANIMATION = False
-    environment_id = 1
+    environment_id = 3
     
     environment_dict = environments[environment_id]
 
