@@ -15,8 +15,8 @@ In addition the following packages need to be installed:
 - matplotlib
 
 ## Installation and usage
-Unzip the file. Next run the main file. Note that in the main file, it is possible to select an environment.
-On first run of every environment, the algorithm will first create a path for that specific environment; this will take some time. Every following run of that environment will use the same path again.
+Clone the repo. Next run the main.py file. Note that in the main file, it is possible to select an environment by changing the `environment_id`.
+On first run of every environment, the algorithm will first create a path for that specific environment; this will take some time. Every following run of that environment will use the same path again. If you want to create a new path, change the global variable `MAKE_ANIMATION` to true
 
 ## Output
 After running the main file, 3 important files will be created. Firstly, an animation will be created, showing the exploration of the workspace using RRT. Next, an image will be created, showing the shortest path that will be used for the MPC algorithm. Lastly, the performance can be evaluated in the performance plot, showing the actual path of prius alongside the optimal path, and other important metrics.
